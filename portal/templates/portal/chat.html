@@ -1,0 +1,170 @@
+{% extends 'portal/base.html' %}
+
+{% block title %}Verified Communication - SSVMT Portal{% endblock %}
+
+{% block header_title %}Internal Verified Message Center{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden flex flex-col md:flex-row h-[calc(100vh-190px)] min-h-[500px]">
+
+    <!-- Contacts list sidebar -->
+    <div class="w-full md:w-80 border-r border-gray-100 flex flex-col bg-gray-50/50">
+        <div class="p-4 border-b border-gray-100 bg-white">
+            <h3 class="font-bold text-slate-800 flex items-center space-x-2">
+                <i class="fa-solid fa-address-book text-saffron"></i>
+                <span>{% if is_superuser_feed %}Auditor Feed{% else %}Verified School Contacts{% endif %}</span>
+            </h3>
+            <p class="text-[10px] text-gray-400 mt-0.5">Secure, monitored communications channel.</p>
+        </div>
+        <div class="flex-1 overflow-y-auto p-2 space-y-1">
+            {% if is_superuser_feed %}
+                <div class="p-4 text-center text-xs text-gray-400">
+                    <i class="fa-solid fa-lock text-saffron text-lg mb-2 block"></i>
+                    Super Admin sees all conversations in the live feed.
+                </div>
+            {% elif contacts %}
+                {% for contact in contacts %}
+                <a href="{% url 'chat_detail' contact.id %}" class="flex items-center justify-between p-3 rounded-2xl transition {% if active_contact.id == contact.id %}bg-saffron text-white{% else %}hover:bg-slate-100 text-slate-700{% endif %}">
+                    <div class="flex items-center space-x-3 min-w-0">
+                        <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs uppercase {% if active_contact.id == contact.id %}bg-white/20 text-white{% else %}bg-saffron/10 text-saffron{% endif %}">
+                            {{ contact.username|slice:":2" }}
+                        </div>
+                        <div class="overflow-hidden">
+                            <p class="text-xs font-semibold truncate leading-tight">{{ contact.get_full_name|default:contact.username }}</p>
+                            <span class="text-[9px] uppercase tracking-wider {% if active_contact.id == contact.id %}text-orange-200{% else %}text-gray-400{% endif %}">
+                                {% if contact.profile %}{{ contact.profile.get_role_display }}{% elif contact.student_profile %}Student ({{ contact.student_profile.class_name }}){% else %}User{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    {% if contact.unread_count > 0 %}
+                    <div class="flex flex-col items-end space-y-1 ml-2">
+                        <span class="w-2 h-2 rounded-full bg-green-500 ring-2 ring-white"></span>
+                        <span class="text-[9px] bg-green-500 text-white rounded-full px-1.5 py-0.5 font-bold min-w-4 text-center leading-none">
+                            {{ contact.unread_count }}
+                        </span>
+                    </div>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            {% else %}
+                <p class="text-xs text-gray-400 p-4 text-center">No verified contacts mapped to your account.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Active Chat Room area -->
+    <div class="flex-1 flex flex-col justify-between bg-white h-full">
+        {% if is_superuser_feed %}
+            <!-- Super Admin Chat Auditor Feed Header -->
+            <div class="p-4 border-b border-gray-100 flex items-center justify-between bg-white z-10">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm">
+                        SA
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-800">Super Admin Messages Auditor Feed</h4>
+                        <span class="text-[9px] text-gray-400 uppercase">Read-Only Live Feed</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auditor Message Thread Panel -->
+            <div id="chat-thread" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/20">
+                {% if system_messages %}
+                    {% for msg in system_messages %}
+                        <div class="bg-white border border-gray-100 p-4 rounded-2xl shadow-sm text-xs leading-relaxed space-y-1 max-w-xl">
+                            <div class="flex justify-between items-center text-[10px] text-gray-400 font-bold border-b border-gray-50 pb-1">
+                                <span>From: {{ msg.sender.get_full_name|default:msg.sender.username }}</span>
+                                <span>To: {{ msg.recipient.get_full_name|default:msg.recipient.username }}</span>
+                            </div>
+                            <p class="text-slate-700 font-medium py-1">{{ msg.content }}</p>
+                            <span class="block text-[8px] text-right text-gray-400">
+                                {{ msg.timestamp|date:"d-m-Y H:i" }}
+                            </span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-xs text-gray-400 text-center py-12">No messages have been sent in the portal yet.</p>
+                {% endif %}
+            </div>
+            <!-- Empty bottom footer with disclaimer -->
+            <div class="p-4 border-t border-gray-100 bg-gray-50/50 text-center text-[10px] text-gray-400">
+                Superuser accounts are in read-only audit mode and cannot send messages.
+            </div>
+        {% elif active_contact %}
+            <!-- Chat Partner Header -->
+            <div class="p-4 border-b border-gray-100 flex items-center justify-between bg-white z-10">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-saffron/10 text-saffron flex items-center justify-center font-bold uppercase text-sm">
+                        {{ active_contact.username|slice:":2" }}
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-800">{{ active_contact.get_full_name|default:active_contact.username }}</h4>
+                        <span class="text-[9px] text-gray-400 uppercase">
+                            {% if active_contact.profile %}{{ active_contact.profile.get_role_display }}{% elif active_contact.student_profile %}Student ({{ active_contact.student_profile.class_name }}){% else %}Staff{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Message Thread Panel -->
+            <div id="chat-thread" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/20">
+                {% if chat_messages %}
+                    {% for msg in chat_messages %}
+                        <div class="flex {% if msg.sender == request.user %}justify-end{% else %}justify-start{% endif %}">
+                            <div class="max-w-xs md:max-w-md p-3.5 rounded-3xl text-xs leading-relaxed shadow-sm {% if msg.sender == request.user %}bg-saffron text-white rounded-tr-none{% else %}bg-white border border-gray-100 text-slate-700 rounded-tl-none{% endif %}">
+                                <p>{{ msg.content }}</p>
+                                <span class="block text-[8px] text-right mt-1.5 {% if msg.sender == request.user %}text-orange-200{% else %}text-gray-400{% endif %}">
+                                    {{ msg.timestamp|date:"d-m-Y H:i" }}
+                                </span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="h-full flex flex-col justify-center items-center text-center py-12">
+                        <div class="w-12 h-12 rounded-full bg-orange-50 text-saffron flex items-center justify-center text-lg mb-2">
+                            <i class="fa-solid fa-comments"></i>
+                        </div>
+                        <p class="text-xs font-bold text-slate-500">Beginning of Conversation</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">Send a message to start communicating.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Message Input Composer Bar -->
+            <div class="p-4 border-t border-gray-100 bg-white">
+                <form action="{% url 'chat_detail' active_contact.id %}" method="POST" class="flex items-center space-x-3">
+                    {% csrf_token %}
+                    <input type="text" name="content" required placeholder="Type a verified message..." class="flex-1 py-3 px-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs transition">
+                    <button type="submit" class="bg-saffron hover:bg-saffron-600 text-white rounded-xl py-3 px-5 text-xs font-semibold transition flex items-center space-x-1.5 shadow-md shadow-saffron/10">
+                        <span>Send</span>
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        {% else %}
+            <!-- Chat Room Not Selected -->
+            <div class="flex-1 flex flex-col justify-center items-center text-center p-8 bg-gray-50/10">
+                <div class="w-16 h-16 rounded-full bg-orange-50 text-saffron flex items-center justify-center text-2xl mb-3">
+                    <i class="fa-solid fa-message"></i>
+                </div>
+                <h4 class="text-sm font-bold text-slate-700">Communication Center</h4>
+                <p class="text-xs text-gray-400 mt-1 max-w-xs leading-relaxed">
+                    Select a verified contact from the list on the left to start viewing message threads or reply to queries.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Scroll chat thread to bottom
+    const thread = document.getElementById('chat-thread');
+    if (thread) {
+        thread.scrollTop = thread.scrollHeight;
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saraswati Shishu Vidya Mandir Tamar</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        saffron: {
+                            50: '#fff5ed',
+                            100: '#ffead6',
+                            200: '#ffd0ad',
+                            300: '#ffa775',
+                            400: '#ff763d',
+                            500: '#ff4d12',
+                            600: '#ff3000',
+                            700: '#cc1a00',
+                            800: '#a11606',
+                            900: '#821609',
+                            DEFAULT: '#FF6600',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FAFAFA;
+        }
+    </style>
+</head>
+<body class="text-gray-800 flex flex-col min-h-screen">
+
+    <!-- Top Navigation Bar -->
+    <nav class="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20">
+                <!-- Logo & Title -->
+                <div class="flex items-center space-x-3">
+                    {% if config.logo %}
+                        <img src="{{ config.logo.url }}" alt="School Logo" class="w-12 h-12 rounded-xl object-cover border border-gray-200">
+                    {% else %}
+                        <div class="w-12 h-12 rounded-xl bg-saffron text-white flex items-center justify-center font-black text-2xl shadow-md">
+                            SS
+                        </div>
+                    {% endif %}
+                    <div>
+                        <span class="text-slate-900 font-extrabold text-base md:text-lg leading-none tracking-tight block">SARASWATI SHISHU VIDYA MANDIR</span>
+                        <span class="text-[10px] md:text-xs text-saffron uppercase font-bold tracking-widest block mt-0.5">Tamar, Ranchi</span>
+                    </div>
+                </div>
+
+                <!-- Nav Links -->
+                <div class="hidden md:flex items-center space-x-8 text-sm font-semibold text-slate-600">
+                    <a href="#about" class="hover:text-saffron transition">About Us</a>
+                    <a href="#academics" class="hover:text-saffron transition">Academics</a>
+                    <a href="#facilities" class="hover:text-saffron transition">Facilities</a>
+                    <a href="#notices" class="hover:text-saffron transition">Notice Board</a>
+                    <a href="#gallery" class="hover:text-saffron transition">School Gallery</a>
+                    <a href="{% url 'login' %}" class="bg-saffron hover:bg-saffron-600 text-white font-bold py-2.5 px-6 rounded-xl transition shadow-md shadow-saffron/10 transform hover:-translate-y-0.5">
+                        <i class="fa-solid fa-right-to-bracket mr-1.5"></i> Login Portal
+                    </a>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="flex md:hidden items-center">
+                    <a href="{% url 'login' %}" class="bg-saffron hover:bg-saffron-600 text-white font-bold py-1.5 px-3 rounded-lg text-xs mr-2 transition">
+                        Portal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dynamic Hero Carousel Section (Aspect-Ratio 16:9 Protected Frame) -->
+    <div class="relative w-full max-w-7xl mx-auto mt-4 px-4 sm:px-6 lg:px-8">
+        <div class="relative overflow-hidden rounded-3xl shadow-xl aspect-[16/9] w-full bg-slate-900">
+            {% if carousel_images %}
+                {% for slide in carousel_images %}
+                <div class="carousel-slide absolute inset-0 w-full h-full hidden transition-all duration-700 ease-in-out">
+                    <img src="{{ slide.image.url }}" alt="{{ slide.caption }}" class="w-full h-full object-cover">
+                    <!-- Text Overlay -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end p-6 md:p-12">
+                        <p class="text-white font-extrabold text-sm md:text-2xl drop-shadow-md leading-snug">
+                            {{ slide.caption }}
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- Placeholders Slide -->
+                <div class="carousel-slide absolute inset-0 w-full h-full flex flex-col justify-center items-center text-center bg-gradient-to-br from-saffron/20 to-slate-900 p-8 text-white">
+                    <i class="fa-solid fa-school text-5xl mb-4 text-saffron"></i>
+                    <h2 class="text-xl md:text-3xl font-extrabold">Welcome to SSVMT Tamar</h2>
+                    <p class="text-xs md:text-sm text-gray-300 mt-2 max-w-md">Carousel images can be dynamic configured from the Principal CMS dashboard settings.</p>
+                </div>
+            {% endif %}
+            
+            <!-- Controls -->
+            <button onclick="prevSlide()" class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center backdrop-blur-sm transition z-20">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button onclick="nextSlide()" class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center backdrop-blur-sm transition z-20">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN BODY GRID (Notice Board and Principal Desk) -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Principal Desk (2 Columns) -->
+        <div id="about" class="lg:col-span-2 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-center md:items-start gap-8">
+            <!-- 1:1 Photo Frame -->
+            <div class="flex-shrink-0">
+                {% if config.principal_photo %}
+                    <img src="{{ config.principal_photo.url }}" alt="Principal" class="w-48 h-48 rounded-3xl object-cover border-4 border-saffron shadow-md">
+                {% else %}
+                    <div class="w-48 h-48 rounded-3xl bg-saffron/10 border-4 border-saffron flex items-center justify-center text-saffron font-bold text-lg text-center p-4">
+                        Principal Photo Placeholder (1:1 Ratio)
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Desk text details -->
+            <div class="space-y-4">
+                <span class="text-xs font-bold text-saffron uppercase tracking-widest block">From The Principal's Desk</span>
+                <h2 class="text-xl font-bold text-slate-800">{{ config.principal_name }}</h2>
+                <div class="text-xs text-gray-500 font-semibold italic border-l-2 border-saffron pl-3">
+                    "{{ config.principal_message }}"
+                </div>
+                <p class="text-xs text-gray-600 leading-relaxed pt-2">
+                    {{ config.principal_bio }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Live Notice Board circulars -->
+        <div id="notices" class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col">
+            <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                <i class="fa-solid fa-bullhorn text-saffron animate-pulse"></i>
+                <span>Dynamic Announcements</span>
+            </h3>
+            
+            <div class="mt-4 flex-1 overflow-y-auto max-h-[300px] space-y-3.5 pr-2">
+                {% if notices %}
+                    {% for notice in notices %}
+                    <div class="p-3.5 bg-saffron/5 border border-saffron/10 rounded-2xl">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[9px] uppercase tracking-wider bg-saffron text-white py-0.5 px-2 rounded-full font-bold">Circular</span>
+                            <span class="text-[9px] text-gray-400">{{ notice.created_at|date:"d-m-Y" }}</span>
+                        </div>
+                        <h4 class="text-xs font-bold text-slate-800 mt-2">{{ notice.title }}</h4>
+                        <p class="text-[10px] text-gray-500 mt-1 leading-normal">{{ notice.content }}</p>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="h-full flex flex-col justify-center items-center text-center text-gray-400 py-12">
+                        <i class="fa-solid fa-envelope-open text-3xl mb-2 text-gray-300"></i>
+                        <p class="text-xs">No active notices listed at present.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Infrastructure & Values Grid Section -->
+    <div id="facilities" class="bg-gray-50/50 py-12 border-t border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-2xl mx-auto">
+                <span class="text-xs font-bold text-saffron uppercase tracking-widest">Our Infrastructure</span>
+                <h3 class="text-2xl font-extrabold text-slate-800 mt-1">Holistic Academic Environment</h3>
+                <p class="text-xs text-gray-400 mt-2 leading-relaxed">SSVMT Tamar balances cultural value systems alongside dynamic contemporary education structures.</p>
+            </div>
+
+            <div id="academics" class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                <!-- Facility 1 -->
+                <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-3">
+                    <div class="w-10 h-10 rounded-xl bg-orange-50 text-saffron flex items-center justify-center text-lg shadow-sm">
+                        <i class="fa-solid fa-book-bookmark"></i>
+                    </div>
+                    <h4 class="text-sm font-bold text-slate-800">Sanskrit & Cultural Studies</h4>
+                    <p class="text-xs text-gray-500 leading-normal">Fostering deep-rooted values, ethical character, and alignment with Indian heritage.</p>
+                </div>
+                <!-- Facility 2 -->
+                <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-3">
+                    <div class="w-10 h-10 rounded-xl bg-orange-50 text-saffron flex items-center justify-center text-lg shadow-sm">
+                        <i class="fa-solid fa-flask"></i>
+                    </div>
+                    <h4 class="text-sm font-bold text-slate-800">Advanced Laboratories</h4>
+                    <p class="text-xs text-gray-500 leading-normal">Practical learning equipment for Physics, Chemistry, and Biological research applications.</p>
+                </div>
+                <!-- Facility 3 -->
+                <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-3">
+                    <div class="w-10 h-10 rounded-xl bg-orange-50 text-saffron flex items-center justify-center text-lg shadow-sm">
+                        <i class="fa-solid fa-laptop-code"></i>
+                    </div>
+                    <h4 class="text-sm font-bold text-slate-800">Computer Education</h4>
+                    <p class="text-xs text-gray-500 leading-normal">ICT syllabus training programs preparing candidates for digital-age competencies.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- School Event Gallery Section -->
+    <div id="gallery" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-gray-100">
+        <div class="text-center max-w-2xl mx-auto mb-8">
+            <span class="text-xs font-bold text-saffron uppercase tracking-widest">Our Gallery</span>
+            <h3 class="text-2xl font-extrabold text-slate-800 mt-1">Glimpses of SSVMT Events</h3>
+            <p class="text-xs text-gray-400 mt-2 leading-relaxed">Capturing the vibrant moments, academic achievements, and cultural celebrations at our school.</p>
+        </div>
+
+        {% if gallery_events %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {% for event in gallery_events %}
+                <div class="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition duration-300 flex flex-col h-full">
+                    <div class="relative aspect-[16/10] overflow-hidden bg-slate-100">
+                        {% if event.image %}
+                            <img src="{{ event.image.url }}" alt="{{ event.title }}" class="w-full h-full object-cover hover:scale-105 transition duration-500">
+                        {% endif %}
+                        <span class="absolute top-4 right-4 bg-slate-900/80 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
+                            {{ event.date|date:"d M Y" }}
+                        </span>
+                    </div>
+                    <div class="p-6 flex flex-col flex-1 justify-between">
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold text-slate-800 leading-snug">{{ event.title }}</h4>
+                            <p class="text-xs text-gray-500 leading-relaxed">{{ event.description }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-12 bg-white rounded-3xl border border-gray-100 shadow-sm max-w-md mx-auto">
+                <i class="fa-solid fa-images text-gray-300 text-4xl mb-3 block"></i>
+                <p class="text-xs text-gray-500">No gallery events uploaded yet.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-8 px-6 mt-auto text-center text-xs">
+        <p>&copy; 2026 Saraswati Shishu Vidya Mandir Tamar, Ranchi, Jharkhand.</p>
+        <p class="text-[10px] text-slate-600 mt-1">Under Shishu Shiksha Vikas Samiti, Jharkhand</p>
+    </footer>
+
+    <!-- Carousel Javascript -->
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.carousel-slide');
+
+        function showSlide(index) {
+            slides.forEach((slide, idx) => {
+                slide.classList.add('hidden');
+                if (idx === index) slide.classList.remove('hidden');
+            });
+        }
+
+        function nextSlide() {
+            if (slides.length > 0) {
+                currentSlide = (currentSlide + 1) % slides.length;
+                showSlide(currentSlide);
+            }
+        }
+
+        function prevSlide() {
+            if (slides.length > 0) {
+                currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+                showSlide(currentSlide);
+            }
+        }
+
+        // Initialize carousel
+        if (slides.length > 0) {
+            showSlide(0);
+            setInterval(nextSlide, 5000);
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,22 @@
+{% extends 'portal/base.html' %}
+
+{% block title %}Account Pending - SSVMT Portal{% endblock %}
+
+{% block header_title %}Account Registration Pending{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto mt-12 bg-white rounded-3xl border border-gray-100 shadow-xl p-8 text-center">
+    <div class="w-16 h-16 bg-yellow-50 text-yellow-600 rounded-full flex items-center justify-center mx-auto text-3xl mb-4">
+        <i class="fa-solid fa-hourglass-half"></i>
+    </div>
+    <h3 class="text-xl font-bold text-slate-800">Registration Status: Pending Approval</h3>
+    <p class="mt-2 text-gray-500 text-sm leading-relaxed">
+        Your user account has been successfully created, but it is currently not linked to any school profile (Principal, VP, Teacher, or Student).
+    </p>
+    <div class="mt-6 border-t border-gray-100 pt-6">
+        <p class="text-xs text-gray-400">
+            Please contact the administration or the Principal to map your profile role to this login credentials.
+        </p>
+    </div>
+</div>
+{% endblock %}

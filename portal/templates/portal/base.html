@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SSVMT Tamar Portal{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        saffron: {
+                            50: '#fff5ed',
+                            100: '#ffead6',
+                            200: '#ffd0ad',
+                            300: '#ffa775',
+                            400: '#ff763d',
+                            500: '#ff4d12',
+                            600: '#ff3000',
+                            700: '#cc1a00',
+                            800: '#a11606',
+                            900: '#821609',
+                            DEFAULT: '#FF6600',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FAFAFA;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FF6600;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #cc5200;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col md:flex-row text-gray-800">
+
+    <!-- Mobile Top Navigation -->
+    <header class="md:hidden w-full bg-saffron text-white flex justify-between items-center px-4 py-3 shadow-md z-50">
+        <div class="flex items-center space-x-2">
+            <div class="w-8 h-8 rounded-full bg-white text-saffron flex items-center justify-center font-bold text-lg shadow-sm">SS</div>
+            <span class="font-bold tracking-wide text-sm uppercase">SSVMT Tamar Portal</span>
+        </div>
+        <button id="mobile-menu-btn" class="text-white hover:text-orange-200 focus:outline-none">
+            <i class="fa-solid fa-bars text-xl"></i>
+        </button>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="w-full md:w-64 bg-slate-900 text-slate-300 flex-shrink-0 flex flex-col hidden md:flex min-h-screen border-r border-slate-800 shadow-xl transition-all duration-300">
+        <!-- Logo and Brand -->
+        <div class="px-6 py-6 border-b border-slate-800 bg-slate-950 flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-saffron text-white flex items-center justify-center font-bold text-xl shadow-lg shadow-saffron/20">
+                SS
+            </div>
+            <div>
+                <h1 class="font-bold text-white leading-none text-sm tracking-wider uppercase">SSVMT Portal</h1>
+                <span class="text-xs text-saffron font-medium">Tamar, Ranchi</span>
+            </div>
+        </div>
+
+        <!-- User Brief -->
+        {% if user.is_authenticated %}
+        <div class="px-6 py-5 border-b border-slate-800 bg-slate-900/50">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center font-semibold text-white">
+                    {{ user.username|slice:":2"|upper }}
+                </div>
+                <div class="overflow-hidden">
+                    <p class="text-sm font-semibold text-white truncate">{{ user.get_full_name|default:user.username }}</p>
+                    <p class="text-xs text-slate-400 capitalize">
+                        {% if user.is_superuser %}Super Admin{% elif user.profile %}{{ user.profile.get_role_display }}{% elif user.student_profile %}Student ({{ user.student_profile.class_name }}){% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Navigation Links -->
+        <nav class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+            <a href="{% url 'dashboard' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-slate-800 hover:text-white transition {% if request.resolver_match.url_name == 'dashboard' %}bg-saffron text-white{% endif %}">
+                <i class="fa-solid fa-chart-line text-lg w-5"></i>
+                <span>Dashboard</span>
+            </a>
+            
+            {% if user.is_authenticated %}
+                <a href="{% url 'chat_inbox' %}" class="flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium hover:bg-slate-800 hover:text-white transition {% if 'chat' in request.path %}bg-saffron text-white{% endif %}">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-comment-dots text-lg w-5"></i>
+                        <span>Verified Messages</span>
+                    </div>
+                    {% if unread_senders_count > 0 %}
+                        <span class="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
+                            {{ unread_senders_count }}
+                        </span>
+                    {% endif %}
+                </a>
+                
+                {% if not user.student_profile %}
+                    <!-- Teachers, VP, Principal marks view -->
+                    <a href="{% url 'marks_entry' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-slate-800 hover:text-white transition {% if 'marks' in request.path %}bg-saffron text-white{% endif %}">
+                        <i class="fa-solid fa-graduation-cap text-lg w-5"></i>
+                        <span>Marks Entry System</span>
+                    </a>
+                {% endif %}
+                
+                {% if user.profile.role == 'principal' or user.is_superuser %}
+                    <!-- Edit Content navigation dropdown with suboptions -->
+                    <div class="space-y-1">
+                        <span class="px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 block mt-4 mb-2">Edit Content</span>
+                        <a href="{% url 'manage_content' %}?tab=logo" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-xs hover:bg-slate-800 hover:text-white transition">
+                            <i class="fa-solid fa-image text-slate-500 w-4 text-center"></i>
+                            <span>Logo & Carousel</span>
+                        </a>
+                        <a href="{% url 'manage_content' %}?tab=principal" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-xs hover:bg-slate-800 hover:text-white transition">
+                            <i class="fa-solid fa-user-tie text-slate-500 w-4 text-center"></i>
+                            <span>Principal Profile</span>
+                        </a>
+                        <a href="{% url 'manage_content' %}?tab=notices" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-xs hover:bg-slate-800 hover:text-white transition">
+                            <i class="fa-solid fa-bullhorn text-slate-500 w-4 text-center"></i>
+                            <span>Public Notices</span>
+                        </a>
+                        <a href="{% url 'manage_content' %}?tab=students" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-xs hover:bg-slate-800 hover:text-white transition">
+                            <i class="fa-solid fa-user-graduate text-slate-500 w-4 text-center"></i>
+                            <span>Student Details</span>
+                        </a>
+                        <a href="{% url 'manage_content' %}?tab=employees" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-xs hover:bg-slate-800 hover:text-white transition">
+                            <i class="fa-solid fa-users text-slate-500 w-4 text-center"></i>
+                            <span>Employee Details</span>
+                        </a>
+                        <a href="{% url 'manage_content' %}?tab=gallery" class="flex items-center space-x-3 px-4 py-2.5 rounded-lg text-xs hover:bg-slate-800 hover:text-white transition">
+                            <i class="fa-solid fa-images text-slate-500 w-4 text-center"></i>
+                            <span>Gallery Events</span>
+                        </a>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </nav>
+
+        <!-- Sidebar Footer / Logout -->
+        <div class="p-4 border-t border-slate-800 bg-slate-950/40">
+            {% if user.is_authenticated %}
+            <a href="{% url 'logout' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-red-400 hover:bg-red-950/20 hover:text-red-300 transition">
+                <i class="fa-solid fa-right-from-bracket text-lg w-5"></i>
+                <span>Sign Out</span>
+            </a>
+            {% else %}
+            <a href="{% url 'login' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium text-saffron hover:bg-slate-800 transition">
+                <i class="fa-solid fa-right-to-bracket text-lg w-5"></i>
+                <span>Sign In</span>
+            </a>
+            {% endif %}
+        </div>
+    </aside>
+
+    <!-- Main Workspace Content Frame -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-x-hidden min-h-screen">
+        <!-- Top Toolbar Header -->
+        <header class="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between shadow-sm hidden md:flex">
+            <div>
+                <span class="text-xs font-semibold tracking-wider text-slate-400 uppercase">Saraswati Shishu Vidya Mandir Tamar</span>
+                <h2 class="text-xl font-bold text-slate-800">{% block header_title %}Portal Dashboard{% endblock %}</h2>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="text-right">
+                    <p class="text-sm font-medium text-gray-700">Academic Year</p>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-saffron/10 text-saffron">
+                        2026-27
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Page Workspace -->
+        <main class="flex-1 p-4 md:p-8">
+            <!-- Alert Messages -->
+            {% if messages %}
+            <div class="mb-6 space-y-2">
+                {% for message in messages %}
+                <div class="p-4 rounded-xl border flex items-center justify-between {% if message.tags == 'success' %}bg-green-50 border-green-200 text-green-800{% elif message.tags == 'error' %}bg-red-50 border-red-200 text-red-800{% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-200 text-yellow-800{% else %}bg-blue-50 border-blue-200 text-blue-800{% endif %}">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid {% if message.tags == 'success' %}fa-circle-check{% elif message.tags == 'error' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %} text-lg"></i>
+                        <span class="text-sm font-medium">{{ message }}</span>
+                    </div>
+                    <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t border-gray-100 py-4 px-6 text-center text-xs text-gray-400">
+            &copy; 2026 Saraswati Shishu Vidya Mandir Tamar Portal. Ranchi, Jharkhand. All Rights Reserved.
+        </footer>
+    </div>
+
+    <!-- Mobile Menu Script Toggle -->
+    <script>
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const sidebar = document.getElementById('sidebar');
+        
+        if (mobileMenuBtn && sidebar) {
+            mobileMenuBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('hidden');
+            });
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

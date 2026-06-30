@@ -1,0 +1,480 @@
+{% extends 'portal/base.html' %}
+
+{% block title %}Principal Control Panel - SSVMT Portal{% endblock %}
+
+{% block header_title %}Principal Portal Master Cockpit{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- Config Control Status Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <!-- Card 1: Results Publishing -->
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
+            <div>
+                <span class="text-xs font-semibold uppercase text-slate-400">Results status</span>
+                <h3 class="text-lg font-bold text-slate-800 mt-1 flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full {% if config.results_published %}bg-green-500{% else %}bg-red-500{% endif %}"></span>
+                    <span>{% if config.results_published %}Published Globally{% else %}Hidden from Students{% endif %}</span>
+                </h3>
+            </div>
+            <form action="{% url 'publish_results' %}" method="POST" class="mt-4">
+                {% csrf_token %}
+                <button type="submit" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border {% if config.results_published %}border-red-200 text-red-600 bg-red-50 hover:bg-red-100{% else %}border-green-200 text-green-600 bg-green-50 hover:bg-green-100{% endif %} transition">
+                    {% if config.results_published %}Unpublish & Hide Results{% else %}Publish All Results{% endif %}
+                </button>
+            </form>
+        </div>
+
+        <!-- Card 2: Copy Show Configuration -->
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
+            <div>
+                <span class="text-xs font-semibold uppercase text-slate-400">Copy Show Uploads</span>
+                <h3 class="text-lg font-bold text-slate-800 mt-1 flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full {% if config.copy_show_flag %}bg-green-500{% else %}bg-red-500{% endif %}"></span>
+                    <span>{% if config.copy_show_flag %}Active (Exams allowed){% else %}Disabled{% endif %}</span>
+                </h3>
+            </div>
+            <form action="{% url 'copy_show_config' %}" method="POST" class="mt-4">
+                {% csrf_token %}
+                <button type="submit" class="w-full text-xs font-semibold py-2 px-3 rounded-xl border {% if config.copy_show_flag %}border-red-200 text-red-600 bg-red-50 hover:bg-red-100{% else %}border-orange-200 text-orange-600 bg-orange-50 hover:bg-orange-100{% endif %} transition">
+                    {% if config.copy_show_flag %}Disable Answer Sheet Upload{% else %}Enable Answer Sheet Upload{% endif %}
+                </button>
+            </form>
+        </div>
+
+        <!-- Card 3: Pending Onboarding Students -->
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-2xl bg-orange-50 text-saffron flex items-center justify-center text-xl">
+                <i class="fa-solid fa-user-plus"></i>
+            </div>
+            <div>
+                <span class="text-xs font-semibold uppercase text-slate-400">Pending Student Approval</span>
+                <h3 class="text-2xl font-black text-slate-800 mt-0.5">{{ pending_students.count }}</h3>
+            </div>
+        </div>
+
+        <!-- Card 4: Profile Override Requests -->
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-user-pen"></i>
+            </div>
+            <div>
+                <span class="text-xs font-semibold uppercase text-slate-400">Edit Profile Requests</span>
+                <h3 class="text-2xl font-black text-slate-800 mt-0.5">{{ pending_edits.count }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN INTERACTIVE TABS BAR -->
+    <div class="flex border-b border-gray-100 space-x-6">
+        <button onclick="switchTab('approvals')" class="tab-btn font-bold text-sm pb-3 border-b-2 border-saffron text-saffron focus:outline-none" id="tab-approvals">
+            Approvals & Onboarding
+        </button>
+        <button onclick="switchTab('cms')" class="tab-btn font-bold text-sm pb-3 border-b-2 border-transparent text-gray-400 hover:text-slate-800 focus:outline-none" id="tab-cms">
+            Home Page CMS Panel
+        </button>
+    </div>
+
+    <!-- TAB 1: APPROVALS & ONBOARDING -->
+    <div id="section-approvals" class="tab-section space-y-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Onboard Employee Card -->
+            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm lg:col-span-1">
+                <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                    <i class="fa-solid fa-user-tie text-saffron"></i>
+                    <span>Onboard Employee / Teacher</span>
+                </h3>
+                <form action="{% url 'onboard_employee' %}" method="POST" class="mt-4 space-y-4">
+                    {% csrf_token %}
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Username/ID</label>
+                        <input type="text" name="username" required class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">First Name</label>
+                            <input type="text" name="first_name" required class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">Last Name</label>
+                            <input type="text" name="last_name" required class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Email</label>
+                        <input type="email" name="email" required class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Password</label>
+                        <input type="password" name="password" required class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Role</label>
+                        <select name="role" id="role-select" onchange="toggleOnboardingClassSelector()" class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs bg-white">
+                            <option value="vp">Vice-Principal (VP)</option>
+                            <option value="teacher" selected>Teacher / Subject Teacher</option>
+                            <option value="class_teacher">Class Teacher</option>
+                            <option value="staff">Staff</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Assigned Subjects (Hold Ctrl/Cmd to select multiple)</label>
+                        <select name="assigned_subjects" required multiple class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs bg-white h-24">
+                            <option value="Hindi">Hindi</option>
+                            <option value="English">English</option>
+                            <option value="Mathematics">Mathematics</option>
+                            <option value="Science">Science</option>
+                            <option value="Social Science">Social Science</option>
+                            <option value="Sanskrit">Sanskrit</option>
+                            <option value="G.K.">G.K.</option>
+                            <option value="Drawing">Drawing</option>
+                            <option value="Computer">Computer</option>
+                            <option value="Physical & Sports">Physical & Sports</option>
+                        </select>
+                    </div>
+                    <div id="class-teacher-group" class="hidden">
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Class Teacher Assignment (Select Class)</label>
+                        <select name="is_class_teacher_of" class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs bg-white">
+                            <option value="">-- Choose Class --</option>
+                            <option value="Class I">Class I</option>
+                            <option value="Class II">Class II</option>
+                            <option value="Class III">Class III</option>
+                            <option value="Class IV">Class IV</option>
+                            <option value="Class V">Class V</option>
+                            <option value="Class VI">Class VI</option>
+                            <option value="Class VII">Class VII</option>
+                            <option value="Class VIII">Class VIII</option>
+                            <option value="Class IX">Class IX</option>
+                            <option value="Class X">Class X</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full py-3 px-4 bg-saffron hover:bg-saffron-600 text-white rounded-xl text-xs font-semibold transition-all shadow-md">
+                        Onboard Account
+                    </button>
+                </form>
+            </div>
+
+            <!-- Approvals Queues -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Student Approvals Queue -->
+                <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                        <i class="fa-solid fa-list-check text-saffron"></i>
+                        <span>Student Profiles Pending Verification</span>
+                    </h3>
+                    <div class="mt-4 overflow-x-auto">
+                        {% if pending_students %}
+                        <table class="min-w-full text-left text-xs text-gray-500">
+                            <thead class="text-slate-400 font-bold border-b border-gray-100 bg-gray-50/50">
+                                <tr>
+                                    <th class="px-4 py-3">Student Name</th>
+                                    <th class="px-4 py-3">Class/Roll</th>
+                                    <th class="px-4 py-3">Current Status</th>
+                                    <th class="px-4 py-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
+                                {% for student in pending_students %}
+                                <tr>
+                                    <td class="px-4 py-3.5 font-semibold text-slate-800">{{ student.user.get_full_name }}</td>
+                                    <td class="px-4 py-3.5">{{ student.class_name }} / Roll: {{ student.roll_no }}</td>
+                                    <td class="px-4 py-3.5">
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase {% if student.status == 'vp_pending' %}bg-purple-50 text-purple-600 border border-purple-200{% else %}bg-yellow-50 text-yellow-600 border border-yellow-200{% endif %}">
+                                            {{ student.status|upper }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3.5 text-right flex justify-end space-x-2">
+                                        <form action="{% url 'approve_student' student.id %}" method="POST">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="approve">
+                                            <button type="submit" class="bg-saffron text-white py-1 px-3 rounded-lg hover:bg-saffron-600 transition flex items-center space-x-1">
+                                                <i class="fa-solid fa-bolt"></i>
+                                                <span>Approve (Override)</span>
+                                            </button>
+                                        </form>
+                                        <a href="{% url 'reject_student' student.id %}" class="bg-red-50 text-red-600 py-1 px-2.5 rounded-lg border border-red-200 hover:bg-red-100 transition">
+                                            Reject
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p class="text-xs text-gray-400 py-4 text-center">No student onboarding files awaiting approval.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Profile Edit Override Requests Queue (Bypasses VP) -->
+                <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                        <i class="fa-solid fa-user-pen text-saffron"></i>
+                        <span>Profile Edit Requests (Bypasses VP, Direct Override)</span>
+                    </h3>
+                    <div class="mt-4 overflow-x-auto">
+                        {% if pending_edits %}
+                        <table class="min-w-full text-left text-xs text-gray-500">
+                            <thead class="text-slate-400 font-bold border-b border-gray-100 bg-gray-50/50">
+                                <tr>
+                                    <th class="px-4 py-3">Student Name</th>
+                                    <th class="px-4 py-3">Proposed Edits</th>
+                                    <th class="px-4 py-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
+                                {% for edit in pending_edits %}
+                                <tr>
+                                    <td class="px-4 py-3.5 font-semibold text-slate-800">{{ edit.student.user.get_full_name }}</td>
+                                    <td class="px-4 py-3.5 font-mono text-[10px]">
+                                        <div class="bg-gray-50 p-2 rounded-xl border border-gray-100">
+                                            {% for key, val in edit.get_data_dict.items %}
+                                                <div><strong>{{ key }}:</strong> <span class="text-saffron">{{ val }}</span></div>
+                                            {% endfor %}
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3.5 text-right flex justify-end space-x-2">
+                                        <a href="{% url 'approve_edit_request' edit.id %}" class="bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded-lg transition font-semibold">
+                                            Approve & Override DB
+                                        </a>
+                                        <a href="{% url 'reject_edit_request' edit.id %}" class="bg-red-50 text-red-600 py-1 px-2.5 rounded-lg border border-red-200 hover:bg-red-100 transition">
+                                            Reject
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p class="text-xs text-gray-400 py-4 text-center">No profile edit requests waiting for database override.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Marks Pipeline Sign-off Dashboard -->
+                <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                        <i class="fa-solid fa-graduation-cap text-saffron"></i>
+                        <span>Academic Grading Approval Pipeline</span>
+                    </h3>
+                    <div class="mt-4 overflow-x-auto">
+                        {% if pending_marks %}
+                        <table class="min-w-full text-left text-xs text-gray-500">
+                            <thead class="text-slate-400 font-bold border-b border-gray-100 bg-gray-50/50">
+                                <tr>
+                                    <th class="px-4 py-3">Student / Class</th>
+                                    <th class="px-4 py-3">Subject</th>
+                                    <th class="px-4 py-3">Total Marks</th>
+                                    <th class="px-4 py-3">Stage Status</th>
+                                    <th class="px-4 py-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
+                                {% for record in pending_marks %}
+                                <tr>
+                                    <td class="px-4 py-3.5 font-semibold text-slate-800">{{ record.student.user.get_full_name }} ({{ record.student.class_name }})</td>
+                                    <td class="px-4 py-3.5">{{ record.subject }}</td>
+                                    <td class="px-4 py-3.5 font-bold">Obtained: {{ record.grand_total }} / 100</td>
+                                    <td class="px-4 py-3.5">
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border {% if record.status == 'pending_principal' %}bg-yellow-50 border-yellow-200 text-yellow-600{% elif record.status == 'pending_vp' %}bg-purple-50 border-purple-200 text-purple-600{% else %}bg-gray-50 border-gray-200 text-gray-600{% endif %}">
+                                            {{ record.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3.5 text-right flex justify-end space-x-2">
+                                        <a href="{% url 'approve_marks' record.id %}" class="bg-saffron text-white py-1 px-3 rounded-lg hover:bg-saffron-600 transition flex items-center space-x-1">
+                                            <i class="fa-solid fa-check"></i>
+                                            <span>Approve (Override)</span>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p class="text-xs text-gray-400 py-4 text-center">No student academic grades pending approval.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: HOME PAGE CMS PANEL -->
+    <div id="section-cms" class="tab-section space-y-8 hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Desk Content & Logo dynamic update -->
+            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm lg:col-span-1 space-y-6">
+                <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                    <i class="fa-solid fa-address-card text-saffron"></i>
+                    <span>Principal's Desk CMS Settings</span>
+                </h3>
+                
+                <form action="{% url 'cms_update_settings' %}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                    {% csrf_token %}
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">School Logo (1:1 Ratio)</label>
+                        {% if config.logo %}
+                            <img src="{{ config.logo.url }}" alt="Logo" class="w-12 h-12 rounded-xl object-cover mb-2 border">
+                        {% endif %}
+                        <input type="file" name="logo" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-saffron/10 file:text-saffron hover:file:bg-saffron/20">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Principal Name</label>
+                        <input type="text" name="principal_name" value="{{ config.principal_name }}" class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Principal Desk Photo (1:1 Square cropped)</label>
+                        {% if config.principal_photo %}
+                            <img src="{{ config.principal_photo.url }}" alt="Photo" class="w-16 h-16 rounded-2xl object-cover mb-2 border">
+                        {% endif %}
+                        <input type="file" name="principal_photo" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-saffron/10 file:text-saffron hover:file:bg-saffron/20">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Principal Welcome Message</label>
+                        <textarea name="principal_message" rows="3" class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">{{ config.principal_message }}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Principal Biography</label>
+                        <textarea name="principal_bio" rows="5" class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">{{ config.principal_bio }}</textarea>
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-saffron hover:bg-saffron-600 text-white rounded-xl text-xs font-bold transition shadow-md shadow-saffron/10">
+                        Update Principal Desk & Logo
+                    </button>
+                </form>
+            </div>
+
+            <!-- Dynamic Slider Manager (Carousel Images) -->
+            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm lg:col-span-1 space-y-6">
+                <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                    <i class="fa-solid fa-images text-saffron"></i>
+                    <span>Hero Slideshow Manager (Max 5)</span>
+                </h3>
+                
+                <form action="{% url 'cms_upload_carousel' %}" method="POST" enctype="multipart/form-data" class="space-y-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                    {% csrf_token %}
+                    <span class="text-[10px] uppercase font-bold text-slate-400">Upload Carousel Slide</span>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Select Slide Order</label>
+                        <select name="order" class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs bg-white">
+                            <option value="1">Slide #1</option>
+                            <option value="2">Slide #2</option>
+                            <option value="3">Slide #3</option>
+                            <option value="4">Slide #4</option>
+                            <option value="5">Slide #5</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Slide Caption Text</label>
+                        <input type="text" name="caption" required placeholder="Caption description..." class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Event Image file</label>
+                        <input type="file" name="carousel_image" required class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-saffron/10 file:text-saffron">
+                    </div>
+                    <button type="submit" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition">
+                        Upload Slide
+                    </button>
+                </form>
+
+                <!-- Active Slides List -->
+                <div class="space-y-3">
+                    <span class="text-[10px] uppercase font-bold text-slate-400">Current Active Carousel Slides</span>
+                    {% if carousel_slides %}
+                        {% for slide in carousel_slides %}
+                        <div class="p-3 bg-gray-50 border border-gray-100 rounded-2xl flex items-center space-x-3 text-xs">
+                            <img src="{{ slide.image.url }}" class="w-12 h-8 rounded-lg object-cover">
+                            <div class="overflow-hidden">
+                                <span class="font-bold text-saffron">Order {{ slide.order }}</span>
+                                <p class="text-[10px] text-gray-500 truncate mt-0.5">{{ slide.caption }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-[10px] text-gray-400 italic">No slider images uploaded. Default placeholder is active.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Dynamic Announcements Manager (Notices) -->
+            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm lg:col-span-1 space-y-6">
+                <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                    <i class="fa-solid fa-bullhorn text-saffron"></i>
+                    <span>Notice Board circular Posts</span>
+                </h3>
+                
+                <form action="{% url 'cms_add_notice' %}" method="POST" class="space-y-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                    {% csrf_token %}
+                    <span class="text-[10px] uppercase font-bold text-slate-400">Post New Notice</span>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Notice Title</label>
+                        <input type="text" name="title" required placeholder="e.g. Admission Open 2026-27" class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Notice Content</label>
+                        <textarea name="content" rows="3" required placeholder="Announcement details..." class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs"></textarea>
+                    </div>
+                    <button type="submit" class="w-full py-2.5 bg-saffron hover:bg-saffron-600 text-white rounded-xl text-xs font-bold transition shadow-md shadow-saffron/10">
+                        Post Notice Circular
+                    </button>
+                </form>
+
+                <!-- Listed Notices -->
+                <div class="space-y-3 overflow-y-auto max-h-[220px]">
+                    <span class="text-[10px] uppercase font-bold text-slate-400">Active Notice Circulars</span>
+                    {% if notices %}
+                        {% for notice in notices %}
+                        <div class="p-3 bg-gray-50 border border-gray-100 rounded-2xl flex justify-between items-start text-xs">
+                            <div>
+                                <h4 class="font-bold text-slate-800">{{ notice.title }}</h4>
+                                <span class="text-[9px] text-gray-400 mt-0.5">{{ notice.created_at|date:"d-m-Y" }}</span>
+                            </div>
+                            <a href="{% url 'cms_delete_notice' notice.id %}" class="text-red-500 hover:text-red-700">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-[10px] text-gray-400 italic">No notice board circulars listed.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function switchTab(tabId) {
+        // Toggle tab sections
+        document.querySelectorAll('.tab-section').forEach(sec => {
+            sec.classList.add('hidden');
+        });
+        document.getElementById('section-' + tabId).classList.remove('hidden');
+
+        // Toggle tab buttons styles
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('border-saffron', 'text-saffron');
+            btn.classList.add('border-transparent', 'text-gray-400');
+        });
+        
+        const activeBtn = document.getElementById('tab-' + tabId);
+        activeBtn.classList.remove('border-transparent', 'text-gray-400');
+        activeBtn.classList.add('border-saffron', 'text-saffron');
+    }
+
+    function toggleOnboardingClassSelector() {
+        const role = document.getElementById('role-select').value;
+        const group = document.getElementById('class-teacher-group');
+        if (role === 'class_teacher') {
+            group.classList.remove('hidden');
+        } else {
+            group.classList.add('hidden');
+        }
+    }
+</script>
+{% endblock %}

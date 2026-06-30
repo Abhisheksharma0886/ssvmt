@@ -1,0 +1,316 @@
+{% extends 'portal/base.html' %}
+
+{% block title %}Student Dashboard - SSVMT Portal{% endblock %}
+
+{% block header_title %}Student Center{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- Student Stats & Info Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <!-- Profile summary card -->
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between md:col-span-2">
+            <div>
+                <span class="text-xs font-semibold uppercase text-slate-400">Student Profile</span>
+                <h3 class="text-xl font-bold text-slate-800 mt-1">{{ student.user.get_full_name }}</h3>
+                <p class="text-xs text-gray-400 mt-1">Class: <span class="font-bold text-saffron">{{ student.class_name }}</span> | Admission No: {{ student.admission_no }}</p>
+                <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
+                    <div><span class="text-gray-400">Roll Number:</span> <span class="font-medium text-slate-700">{{ student.roll_no }}</span></div>
+                    <div><span class="text-gray-400">Mobile No:</span> <span class="font-medium text-slate-700">{{ student.mobile_no }}</span></div>
+                    <div><span class="text-gray-400">Father's Name:</span> <span class="font-medium text-slate-700">{{ student.father_name }}</span></div>
+                    <div><span class="text-gray-400">Date of Birth:</span> <span class="font-medium text-slate-700">{{ student.dob|date:"d-m-Y" }}</span></div>
+                </div>
+            </div>
+            <!-- Edit Request Trigger -->
+            <button onclick="toggleEditDrawer()" class="mt-6 w-full py-2 px-3 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition">
+                <i class="fa-solid fa-user-pen mr-1"></i> Request Profile Edit
+            </button>
+        </div>
+
+        <!-- Attendance Stats -->
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
+            <div>
+                <span class="text-xs font-semibold uppercase text-slate-400">Attendance status</span>
+                <h3 class="text-3xl font-black text-slate-800 mt-2">{{ attendance_percentage }}%</h3>
+                <p class="text-xs text-gray-400 mt-1">Attended {{ attended }} of {{ config.school_working_days }} working days</p>
+            </div>
+            <div class="mt-4 w-full bg-gray-100 rounded-full h-2">
+                <div class="bg-saffron h-2 rounded-full" style="width: {{ attendance_percentage }}%"></div>
+            </div>
+        </div>
+
+        <!-- CGPA & Rank (Only shown if results are published) -->
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
+            {% if config.results_published %}
+            <div>
+                <span class="text-xs font-semibold uppercase text-slate-400">Academic Score (CGPA)</span>
+                <h3 class="text-3xl font-black text-saffron mt-2">{{ cgpa }}</h3>
+                <p class="text-xs text-gray-400 mt-1">Overall Percentage: {{ overall_percentage }}%</p>
+                <p class="text-xs text-slate-500 font-bold mt-1">Class Rank: #{{ rank }}</p>
+            </div>
+            <a href="{% url 'report_card' student.id %}" target="_blank" class="mt-4 w-full py-2.5 px-3 bg-saffron hover:bg-saffron-600 text-white rounded-xl text-xs font-bold text-center transition flex items-center justify-center space-x-1.5 shadow-md shadow-saffron/10">
+                <i class="fa-solid fa-file-invoice"></i>
+                <span>Open Digital Report Card</span>
+            </a>
+            {% else %}
+            <div class="h-full flex flex-col justify-center items-center text-center">
+                <div class="w-10 h-10 rounded-full bg-yellow-50 text-yellow-600 flex items-center justify-center text-lg mb-2">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <span class="text-xs font-bold text-slate-600">Results Vetting Pending</span>
+                <p class="text-[10px] text-gray-400 mt-1 leading-snug">Report card will show here once published by the Principal.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Student Timetable & Leaves Panel -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Column 1: My Class Schedule & Monthly Calendar -->
+        <div class="lg:col-span-1 space-y-8">
+            <!-- Class Timetable Reader -->
+            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm overflow-y-auto max-h-[460px]">
+                <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                    <i class="fa-solid fa-calendar-days text-saffron"></i>
+                    <span>My Class Schedule ({{ student.class_name }})</span>
+                </h3>
+                <div class="mt-4 space-y-3">
+                    {% if timetable %}
+                        {% for slot in timetable %}
+                        <div class="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between text-xs">
+                            <div>
+                                <span class="font-bold text-slate-800">{{ slot.day_of_week }}</span> - <span class="text-gray-500">Period {{ slot.period_number }}</span>
+                                <p class="text-[10px] text-saffron font-semibold mt-0.5">{{ slot.subject }}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] text-gray-400">Teacher: {{ slot.teacher.user.get_full_name }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-xs text-gray-400 py-4 text-center">Class schedule timetable has not been uploaded yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Monthly Calendar Widget -->
+            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-calendar text-saffron"></i>
+                        <span>Monthly Attendance Calendar</span>
+                    </div>
+                    <span class="text-xs text-saffron font-bold">{{ current_month_name }}</span>
+                </h3>
+                
+                <!-- Color coding legend -->
+                <div class="mt-4 grid grid-cols-5 gap-1 text-[9px] font-bold text-center bg-gray-50 p-2 rounded-xl border border-gray-100 mb-4">
+                    <div class="flex flex-col items-center justify-center p-1 bg-white border border-gray-200 rounded-lg">
+                        <span class="w-2.5 h-2.5 bg-white border border-gray-300 rounded-full mb-1"></span>
+                        <span class="text-gray-500">Upcoming</span>
+                    </div>
+                    <div class="flex flex-col items-center justify-center p-1 bg-green-500 text-white rounded-lg">
+                        <span class="w-2.5 h-2.5 bg-white rounded-full mb-1"></span>
+                        <span>Present</span>
+                    </div>
+                    <div class="flex flex-col items-center justify-center p-1 bg-red-500 text-white rounded-lg">
+                        <span class="w-2.5 h-2.5 bg-white rounded-full mb-1"></span>
+                        <span>Absent</span>
+                    </div>
+                    <div class="flex flex-col items-center justify-center p-1 bg-yellow-400 text-slate-800 rounded-lg">
+                        <span class="w-2.5 h-2.5 bg-white rounded-full mb-1"></span>
+                        <span>Event</span>
+                    </div>
+                    <div class="flex flex-col items-center justify-center p-1 bg-green-500 text-white rounded-lg relative overflow-hidden">
+                        <span class="w-1.5 h-1.5 bg-red-500 rounded-full absolute top-1 right-1"></span>
+                        <span class="w-2.5 h-2.5 bg-white rounded-full mb-1"></span>
+                        <span>Late</span>
+                    </div>
+                </div>
+
+                <!-- Calendar 1-30 Grid -->
+                <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold">
+                    <!-- Headers -->
+                    <div class="text-slate-400 text-[10px] uppercase">Mon</div>
+                    <div class="text-slate-400 text-[10px] uppercase">Tue</div>
+                    <div class="text-slate-400 text-[10px] uppercase">Wed</div>
+                    <div class="text-slate-400 text-[10px] uppercase">Thu</div>
+                    <div class="text-slate-400 text-[10px] uppercase">Fri</div>
+                    <div class="text-slate-400 text-[10px] uppercase">Sat</div>
+                    <div class="text-red-400 text-[10px] uppercase">Sun</div>
+                    
+                    {% for day in calendar_days %}
+                        <div class="w-full aspect-square flex items-center justify-center rounded-xl transition-all border relative
+                            {% if day.status == 'upcoming' %}
+                                bg-white text-slate-700 border-gray-100 hover:border-gray-300
+                            {% elif day.status == 'present' %}
+                                bg-green-500 text-white border-green-600 shadow-sm shadow-green-100
+                            {% elif day.status == 'absent' %}
+                                bg-red-500 text-white border-red-600 shadow-sm shadow-red-100
+                            {% elif day.status == 'event' %}
+                                bg-yellow-400 text-slate-800 border-yellow-500 shadow-sm shadow-yellow-100
+                            {% elif day.status == 'late' %}
+                                bg-green-500 text-white border-green-600 shadow-sm shadow-green-100
+                            {% endif %}">
+                            
+                            <!-- Red dot in corner for late status -->
+                            {% if day.status == 'late' %}
+                                <span class="absolute top-1 right-1 w-1.5 h-1.5 bg-red-600 rounded-full border border-white"></span>
+                            {% endif %}
+                            
+                            <span>{{ day.day }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Column 2: Apply for Leave Form -->
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm lg:col-span-1">
+            <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                <i class="fa-solid fa-pen-nib text-saffron"></i>
+                <span>Apply for Leave</span>
+            </h3>
+            <form action="{% url 'apply_leave' %}" method="POST" class="mt-4 space-y-4">
+                {% csrf_token %}
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Start Date</label>
+                        <input type="date" name="start_date" id="leave_start_date" required class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">End Date</label>
+                        <input type="date" name="end_date" id="leave_end_date" required class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Reason for Leave</label>
+                    <textarea name="reason" rows="4" required placeholder="State your reason clearly..." class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs"></textarea>
+                </div>
+                <button type="submit" class="w-full py-3 px-4 bg-saffron hover:bg-saffron-600 text-white rounded-xl text-xs font-semibold transition-all">
+                    Submit Leave Request
+                </button>
+            </form>
+        </div>
+
+        <!-- Column 3: Leaves History Ledger -->
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm lg:col-span-1 overflow-y-auto max-h-[460px]">
+            <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                <i class="fa-solid fa-list text-saffron"></i>
+                <span>Leave Application History</span>
+            </h3>
+            <div class="mt-4 space-y-3.5">
+                {% if leaves %}
+                    {% for leave in leaves %}
+                    <div class="p-3.5 bg-gray-50 border border-gray-100 rounded-2xl flex flex-col justify-between text-xs space-y-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="font-bold text-slate-800">{{ leave.start_date|date:"d-m-Y" }} to {{ leave.end_date|date:"d-m-Y" }}</span>
+                                <p class="text-[10px] text-gray-400 mt-0.5">Applied: {{ leave.created_at|date:"d-m-Y" }}</p>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider {% if leave.status == 'approved' %}bg-green-50 text-green-600 border border-green-200{% elif leave.status == 'rejected' %}bg-red-50 text-red-600 border border-red-200{% else %}bg-yellow-50 text-yellow-600 border border-yellow-200{% endif %}">
+                                {{ leave.status }}
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-gray-600 italic">"{{ leave.reason }}"</p>
+                        {% if leave.status == 'approved' %}
+                            <a href="{% url 'print_leave_slip' leave.id %}" target="_blank" class="w-full mt-2 inline-flex justify-center items-center py-1.5 px-3 border border-saffron bg-saffron/10 text-saffron hover:bg-saffron hover:text-white rounded-lg text-[10px] font-bold transition">
+                                <i class="fa-solid fa-print mr-1"></i> Print / Download Leave Slip
+                            </a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-xs text-gray-400 py-4 text-center">No leave requests logged.</p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Hidden Edit Request Drawer Modal -->
+    <div id="edit-drawer" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex justify-end hidden transition-all duration-300">
+        <div class="bg-white w-full max-w-md h-full shadow-2xl p-6 flex flex-col justify-between overflow-y-auto">
+            <div>
+                <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+                    <h3 class="text-base font-bold text-slate-800 flex items-center space-x-2">
+                        <i class="fa-solid fa-user-pen text-saffron"></i>
+                        <span>Raise Profile Edit Request</span>
+                    </h3>
+                    <button onclick="toggleEditDrawer()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+                <p class="text-[11px] text-gray-500 bg-orange-50/50 p-3 rounded-xl border border-orange-100/50 mt-4 leading-relaxed">
+                    <strong>Rule:</strong> You cannot override your profile directly. Submitting this form sends an override recommendation request to your Class Teacher, which goes straight to the Principal for database override approval.
+                </p>
+                <form action="{% url 'edit_profile_request' %}" method="POST" class="mt-4 space-y-4">
+                    {% csrf_token %}
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">First Name</label>
+                        <input type="text" name="first_name" value="{{ student.user.first_name }}" class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Last Name</label>
+                        <input type="text" name="last_name" value="{{ student.user.last_name }}" class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Father's Name</label>
+                        <input type="text" name="father_name" value="{{ student.father_name }}" class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Mother's Name</label>
+                        <input type="text" name="mother_name" value="{{ student.mother_name }}" class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Roll Number</label>
+                        <input type="text" name="roll_no" value="{{ student.roll_no }}" class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Mobile No</label>
+                        <input type="text" name="mobile_no" value="{{ student.mobile_no }}" class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Date of Birth</label>
+                        <input type="date" name="dob" value="{{ student.dob|date:'Y-m-d' }}" class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1">Residential Address</label>
+                        <textarea name="address" rows="3" class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">{{ student.address }}</textarea>
+                    </div>
+                    <button type="submit" class="w-full mt-4 py-3 px-4 bg-saffron hover:bg-saffron-600 text-white rounded-xl text-xs font-bold transition-all shadow-md">
+                        Submit Override Request
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleEditDrawer() {
+        const drawer = document.getElementById('edit-drawer');
+        drawer.classList.toggle('hidden');
+    }
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        const today = new Date().toISOString().split('T')[0];
+        const startInput = document.getElementById('leave_start_date');
+        const endInput = document.getElementById('leave_end_date');
+        if (startInput) {
+            startInput.setAttribute('min', today);
+            startInput.addEventListener('change', function() {
+                endInput.setAttribute('min', this.value);
+            });
+        }
+        if (endInput) {
+            endInput.setAttribute('min', today);
+        }
+    });
+</script>
+{% endblock %}

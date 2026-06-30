@@ -1,0 +1,291 @@
+{% extends 'portal/base.html' %}
+
+{% block title %}Marks Entry Console - SSVMT Portal{% endblock %}
+
+{% block header_title %}Gradebook & Marksheets Manager{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- Query Selectors Panel -->
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <h3 class="text-sm font-bold text-slate-800 border-b border-gray-100 pb-3">Academic Selection Parameters</h3>
+        <form method="GET" action="{% url 'marks_entry' %}" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 mb-1">Target Class</label>
+                <select name="class_name" required class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs bg-white">
+                    <option value="">-- Choose Class --</option>
+                    {% for cls in classes %}
+                        <option value="{{ cls }}" {% if selected_class == cls %}selected{% endif %}>{{ cls }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 mb-1">Assigned Subject Domain</label>
+                <select name="subject" required class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs bg-white">
+                    <option value="">-- Choose Subject --</option>
+                    {% for sub in allowed_subjects %}
+                        <option value="{{ sub }}" {% if selected_subject == sub %}selected{% endif %}>{{ sub }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="py-2.5 px-4 bg-saffron hover:bg-saffron-600 text-white rounded-xl text-xs font-bold transition shadow-md shadow-saffron/10 flex items-center justify-center space-x-1">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <span>Load Grid Marks</span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Marks Entry Grid Sheet -->
+    {% if selected_class and selected_subject %}
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        
+        <!-- Header details -->
+        <div class="flex justify-between items-center border-b border-gray-100 pb-4">
+            <div>
+                <h3 class="text-base font-bold text-slate-800">Academic Grid: {{ selected_subject }}</h3>
+                <p class="text-xs text-gray-400 mt-0.5">Target: <span class="font-bold text-saffron">{{ selected_class }}</span> | Total active students loaded.</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button type="button" onclick="toggleCopyShowUploads()" class="py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition shadow-md flex items-center space-x-1.5">
+                    <i class="fa-solid fa-copy"></i>
+                    <span>Copy/Show Uploads</span>
+                </button>
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-orange-50 text-orange-600 border border-orange-200">
+                    Grading Grid
+                </span>
+            </div>
+        </div>
+
+        <!-- Collapsible Copy/Show Uploads status check -->
+        <div id="copy-show-section" class="hidden bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-4 my-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-3">
+                <div>
+                    <h4 class="text-xs font-bold text-slate-800">Copy/Show Uploads Status Check</h4>
+                    <p class="text-[10px] text-gray-400">Select an exam to identify which marks are completed or pending entry.</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase">Exam Stage:</label>
+                    <select id="copy-show-exam-select" onchange="filterCopyShowExam()" class="py-1.5 px-3 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-1 focus:ring-saffron">
+                        <option value="PT-01">Periodic Test 1 (PT-01)</option>
+                        <option value="SA-01">Summative Assessment 1 (SA-01)</option>
+                        <option value="PT-02">Periodic Test 2 (PT-02)</option>
+                        <option value="SA-02">Summative Assessment 2 (SA-02)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for record in marks_records %}
+                <div class="student-exam-card p-4 bg-white border border-slate-100 rounded-2xl flex justify-between items-center text-xs shadow-sm hover:border-slate-200 transition"
+                     data-student-name="{{ record.student.user.get_full_name }}"
+                     data-pt-01="{{ record.term1_fa }}"
+                     data-sa-01="{{ record.term1_sa }}"
+                     data-pt-02="{{ record.term2_fa }}"
+                     data-sa-02="{{ record.term2_sa }}">
+                    <div>
+                        <span class="font-bold text-slate-800 block">{{ record.student.user.get_full_name }}</span>
+                        <span class="text-[10px] text-gray-400">Roll No: {{ record.student.roll_no }}</span>
+                    </div>
+                    <div class="exam-status-badge">
+                        <!-- Filled dynamically by JS -->
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Spreadsheet form -->
+        <form action="" method="POST" class="mt-4">
+            {% csrf_token %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-left text-xs text-gray-500 whitespace-nowrap">
+                    <thead class="text-slate-400 font-bold uppercase border-b border-gray-100 bg-gray-50/50">
+                        <tr>
+                            <th class="px-4 py-3">Roll No</th>
+                            <th class="px-4 py-3">Student Name</th>
+                            {% if config.active_exam_stage == 'PT-01' %}
+                                <th class="px-4 py-3 text-center bg-orange-50/20">PT-01 (10)</th>
+                            {% elif config.active_exam_stage == 'SA-01' %}
+                                <th class="px-4 py-3 text-center bg-orange-50/20">PT-01 (10) [R/O]</th>
+                                <th class="px-4 py-3 text-center bg-orange-50/20">SA-01 (40)</th>
+                            {% elif config.active_exam_stage == 'PT-02' %}
+                                <th class="px-4 py-3 text-center bg-orange-50/20">PT-01 (10) [R/O]</th>
+                                <th class="px-4 py-3 text-center bg-orange-50/20">SA-01 (40) [R/O]</th>
+                                <th class="px-4 py-3 text-center bg-blue-50/10">PT-02 (10)</th>
+                            {% elif config.active_exam_stage == 'SA-02' %}
+                                <th class="px-4 py-3 text-center bg-orange-50/20">PT-01 (10) [R/O]</th>
+                                <th class="px-4 py-3 text-center bg-orange-50/20">SA-01 (40) [R/O]</th>
+                                <th class="px-4 py-3 text-center bg-blue-50/10">PT-02 (10) [R/O]</th>
+                                <th class="px-4 py-3 text-center bg-blue-50/10">SA-02 (40)</th>
+                            {% endif %}
+                            <th class="px-4 py-3 text-center font-black text-slate-700 bg-gray-50">Grand (100)</th>
+                            <th class="px-4 py-3 text-center">Status</th>
+                            <th class="px-4 py-3 text-right">Approval Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for record in marks_records %}
+                        <tr>
+                            <td class="px-4 py-3.5 font-bold text-slate-800">{{ record.student.roll_no }}</td>
+                            <td class="px-4 py-3.5 font-semibold text-slate-700">
+                                <div>{{ record.student.user.get_full_name }}</div>
+                                <span class="text-[9px] text-gray-400 font-mono">ID: {{ record.student.admission_no }}</span>
+                            </td>
+                            <!-- Inputs -->
+                            {% if config.active_exam_stage == 'PT-01' %}
+                                <td class="px-4 py-3.5 text-center bg-orange-50/10">
+                                    <input type="number" name="t1_fa_{{ record.id }}" step="0.5" min="0" max="10" value="{{ record.term1_fa }}" {% if record.status == 'approved' %}disabled{% endif %} class="w-16 py-1 px-1.5 border border-gray-200 rounded-lg text-center font-bold focus:ring-1 focus:ring-saffron text-xs focus:outline-none">
+                                </td>
+                            {% elif config.active_exam_stage == 'SA-01' %}
+                                <td class="px-4 py-3.5 text-center text-gray-400 bg-gray-50 font-bold">{{ record.term1_fa }}</td>
+                                <td class="px-4 py-3.5 text-center bg-orange-50/10">
+                                    <input type="number" name="t1_sa_{{ record.id }}" step="0.5" min="0" max="40" value="{{ record.term1_sa }}" {% if record.status == 'approved' %}disabled{% endif %} class="w-16 py-1 px-1.5 border border-gray-200 rounded-lg text-center font-bold focus:ring-1 focus:ring-saffron text-xs focus:outline-none">
+                                </td>
+                            {% elif config.active_exam_stage == 'PT-02' %}
+                                <td class="px-4 py-3.5 text-center text-gray-400 bg-gray-50 font-bold">{{ record.term1_fa }}</td>
+                                <td class="px-4 py-3.5 text-center text-gray-400 bg-gray-50 font-bold">{{ record.term1_sa }}</td>
+                                <td class="px-4 py-3.5 text-center bg-blue-50/5">
+                                    <input type="number" name="t2_fa_{{ record.id }}" step="0.5" min="0" max="10" value="{{ record.term2_fa }}" {% if record.status == 'approved' %}disabled{% endif %} class="w-16 py-1 px-1.5 border border-gray-200 rounded-lg text-center font-bold focus:ring-1 focus:ring-saffron text-xs focus:outline-none">
+                                </td>
+                            {% elif config.active_exam_stage == 'SA-02' %}
+                                <td class="px-4 py-3.5 text-center text-gray-400 bg-gray-50 font-bold">{{ record.term1_fa }}</td>
+                                <td class="px-4 py-3.5 text-center text-gray-400 bg-gray-50 font-bold">{{ record.term1_sa }}</td>
+                                <td class="px-4 py-3.5 text-center text-gray-400 bg-gray-50 font-bold">{{ record.term2_fa }}</td>
+                                <td class="px-4 py-3.5 text-center bg-blue-50/5">
+                                    <input type="number" name="t2_sa_{{ record.id }}" step="0.5" min="0" max="40" value="{{ record.term2_sa }}" {% if record.status == 'approved' %}disabled{% endif %} class="w-16 py-1 px-1.5 border border-gray-200 rounded-lg text-center font-bold focus:ring-1 focus:ring-saffron text-xs focus:outline-none">
+                                </td>
+                            {% endif %}
+                            
+                            <td class="px-4 py-3.5 text-center font-black text-slate-800 bg-gray-50 text-sm">
+                                {{ record.grand_total }}
+                            </td>
+                            <!-- Status badge -->
+                            <td class="px-4 py-3.5 text-center">
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider {% if record.status == 'approved' %}bg-green-50 text-green-600 border border-green-200{% elif record.status == 'draft' %}bg-gray-100 text-gray-500{% else %}bg-yellow-50 text-yellow-600 border border-yellow-200{% endif %}">
+                                    {{ record.get_status_display }}
+                                </span>
+                            </td>
+                            <!-- Workflow buttons -->
+                            <td class="px-4 py-3.5 text-right flex justify-end space-x-1.5 items-center">
+                                {% if record.status == 'draft' %}
+                                    <a href="{% url 'submit_marks' record.id %}" class="bg-slate-900 text-white py-1 px-2.5 rounded-lg text-[10px] font-bold hover:bg-slate-800 transition">
+                                        Submit CT
+                                    </a>
+                                {% elif record.status == 'pending_class_teacher' and request.user == record.student.class_teacher %}
+                                    <a href="{% url 'verify_marks' record.id %}" class="bg-saffron text-white py-1 px-2.5 rounded-lg text-[10px] font-bold hover:bg-saffron-600 transition">
+                                        Verify & VP
+                                    </a>
+                                {% elif record.status == 'pending_vp' and request.user.profile.role == 'vp' %}
+                                    <a href="{% url 'vet_marks' record.id %}" class="bg-saffron text-white py-1 px-2.5 rounded-lg text-[10px] font-bold hover:bg-saffron-600 transition">
+                                        Vet & Principal
+                                    </a>
+                                {% elif record.status == 'pending_principal' and request.user.profile.role == 'principal' %}
+                                    <a href="{% url 'approve_marks' record.id %}" class="bg-green-600 text-white py-1 px-2.5 rounded-lg text-[10px] font-bold hover:bg-green-700 transition">
+                                        Approve
+                                    </a>
+                                {% endif %}
+                                
+                                <!-- Principal Override button (Short-circuits) -->
+                                {% if request.user.profile.role == 'principal' and record.status != 'approved' %}
+                                    <a href="{% url 'approve_marks' record.id %}" class="bg-orange-600 text-white py-1 px-2.5 rounded-lg text-[10px] font-bold hover:bg-orange-700 transition">
+                                        Override Approve
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Save values submit bar -->
+            <div class="mt-6 flex justify-between items-center border-t border-gray-100 pt-6">
+                <span class="text-xs text-red-500 font-semibold">* Submit inputs to save drafts before forwarding to approvals.</span>
+                <button type="submit" class="bg-saffron hover:bg-saffron-600 text-white rounded-xl py-3 px-6 text-xs font-bold transition shadow-md shadow-saffron/10">
+                    Save Gradebook Changes (Drafts)
+                </button>
+            </div>
+        </form>
+
+        <!-- Copy Show File Upload (Dynamic configure by Principal) -->
+        {% if config.copy_show_flag %}
+        <div class="mt-8 border-t border-gray-100 pt-6">
+            <h4 class="text-xs font-bold text-slate-800 flex items-center space-x-2">
+                <i class="fa-solid fa-file-arrow-up text-saffron animate-bounce"></i>
+                <span>"Copy Show" Active: Upload Student Scanned Answer Sheets</span>
+            </h4>
+            <p class="text-[10px] text-gray-400 mt-0.5">Scanned answer sheet uploads are currently allowed for current exams.</p>
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for record in marks_records %}
+                <div class="p-3 bg-gray-50 border border-gray-100 rounded-2xl flex justify-between items-center text-xs">
+                    <div>
+                        <span class="font-bold text-slate-800">{{ record.student.user.get_full_name }}</span>
+                        {% if record.scanned_sheet %}
+                        <div class="mt-1 flex items-center space-x-1 text-[10px] text-green-600">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <a href="{{ record.scanned_sheet.url }}" target="_blank" class="hover:underline">View Uploaded Sheet</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <form action="{% url 'upload_scanned_sheet' record.id %}" method="POST" enctype="multipart/form-data" class="flex items-center space-x-2">
+                        {% csrf_token %}
+                        <input type="file" name="scanned_sheet" required class="text-[10px] py-1 border border-gray-200 rounded-lg max-w-[150px]">
+                        <button type="submit" class="bg-slate-900 text-white hover:bg-slate-800 text-[10px] font-bold py-1 px-2.5 rounded-lg transition">
+                            Upload
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleCopyShowUploads() {
+        const section = document.getElementById('copy-show-section');
+        section.classList.toggle('hidden');
+        if (!section.classList.contains('hidden')) {
+            filterCopyShowExam();
+        }
+    }
+
+    function filterCopyShowExam() {
+        const select = document.getElementById('copy-show-exam-select');
+        const selectedExam = select.value; // 'PT-01', 'SA-01', 'PT-02', 'SA-02'
+        const cards = document.querySelectorAll('.student-exam-card');
+        
+        cards.forEach(card => {
+            const valAttr = selectedExam.toLowerCase(); // 'pt-01', 'sa-01', etc.
+            const val = parseFloat(card.getAttribute('data-' + valAttr));
+            const badgeContainer = card.querySelector('.exam-status-badge');
+            
+            // Set max marks based on exam type
+            const maxMarks = (selectedExam.includes('PT')) ? 10 : 40;
+            
+            if (isNaN(val) || val === 0) {
+                badgeContainer.innerHTML = `
+                    <span class="px-2 py-1 rounded-full text-[9px] font-extrabold uppercase bg-red-50 text-red-600 border border-red-200 flex items-center space-x-1">
+                        <i class="fa-solid fa-triangle-exclamation animate-pulse"></i>
+                        <span>Pending</span>
+                    </span>
+                `;
+            } else {
+                badgeContainer.innerHTML = `
+                    <span class="px-2 py-1 rounded-full text-[9px] font-extrabold uppercase bg-green-50 text-green-600 border border-green-200 flex items-center space-x-1">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Entered: ${val}/${maxMarks}</span>
+                    </span>
+                `;
+            }
+        });
+    }
+</script>
+{% endblock %}

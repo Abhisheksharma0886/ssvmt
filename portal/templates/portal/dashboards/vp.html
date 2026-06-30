@@ -1,0 +1,245 @@
+{% extends 'portal/base.html' %}
+
+{% block title %}VP Dashboard - SSVMT Portal{% endblock %}
+
+{% block header_title %}Vice-Principal Management Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- Timetable Slot Manager & Instant Copy Tool -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Slot Creator -->
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm lg:col-span-1">
+            <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                <i class="fa-solid fa-calendar-plus text-saffron"></i>
+                <span>Configure Timetable Slot</span>
+            </h3>
+            <form action="{% url 'timetable' %}" method="POST" class="mt-4 space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Select Class</label>
+                    <select name="class_name" required class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs bg-white">
+                        {% for cls in classes %}
+                            <option value="{{ cls }}">{{ cls }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Day of Week</label>
+                    <select name="day_of_week" required class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs bg-white">
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Period</label>
+                    <select name="period_number" required class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs bg-white">
+                        <option value="1">Period 1</option>
+                        <option value="2">Period 2</option>
+                        <option value="3">Period 3</option>
+                        <option value="4">Period 4</option>
+                        <option value="5">Period 5</option>
+                        <option value="6">Period 6</option>
+                        <option value="7">Period 7</option>
+                        <option value="8">Period 8</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Subject Name</label>
+                    <select name="subject" required class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs bg-white">
+                        <option value="Hindi">Hindi</option>
+                        <option value="English">English</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Science">Science</option>
+                        <option value="Social Science">Social Science</option>
+                        <option value="Sanskrit">Sanskrit</option>
+                        <option value="G.K.">G.K.</option>
+                        <option value="Drawing">Drawing</option>
+                        <option value="Computer">Computer</option>
+                        <option value="Physical & Sports">Physical & Sports</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Assigned Teacher</label>
+                    <select name="teacher_id" required class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs bg-white">
+                        {% for teacher in teachers %}
+                            <option value="{{ teacher.id }}">{{ teacher.user.get_full_name }} ({{ teacher.assigned_subjects }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="w-full py-3 px-4 bg-saffron hover:bg-saffron-600 text-white rounded-xl text-xs font-semibold transition-all shadow-md shadow-saffron/10">
+                    Save Slot Configuration
+                </button>
+            </form>
+        </div>
+
+        <!-- Timetable Copy Tool ("Same as Previous" feature) -->
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm lg:col-span-1">
+            <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                <i class="fa-solid fa-copy text-saffron"></i>
+                <span>"Same as Previous" Timetable Copy Tool</span>
+            </h3>
+            <p class="text-xs text-gray-400 mt-2 leading-relaxed">
+                Use this tool to copy all period configurations of a class from one day to override another day instantly.
+            </p>
+            <form action="{% url 'copy_timetable' %}" method="POST" class="mt-4 space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Select Class Name</label>
+                    <select name="class_name" required class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs bg-white">
+                        {% for cls in classes %}
+                            <option value="{{ cls }}">{{ cls }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Source Day (Copy From)</label>
+                    <select name="source_day" required class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs bg-white">
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Target Day (Overwrite & Apply To)</label>
+                    <select name="target_day" required class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs bg-white">
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday" selected>Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition-all">
+                    Execute Instant Copy/Override
+                </button>
+            </form>
+        </div>
+
+        <!-- Active Timetable Checker (Class Schedule Grid) -->
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm lg:col-span-1 overflow-y-auto max-h-[460px]">
+            <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                <i class="fa-solid fa-calendar-days text-saffron"></i>
+                <span>Active Timetable Registry</span>
+            </h3>
+            <div class="mt-4 space-y-3">
+                {% if timetables %}
+                    {% for slot in timetables %}
+                    <div class="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between text-xs">
+                        <div>
+                            <span class="font-bold text-slate-800">{{ slot.class_name }}</span> - <span class="text-gray-500">{{ slot.day_of_week }}</span>
+                            <p class="text-[10px] text-gray-400 mt-0.5">Period {{ slot.period_number }}: {{ slot.subject }}</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="inline-flex px-2 py-0.5 rounded-full text-[9px] bg-saffron/10 text-saffron font-bold">{{ slot.teacher.user.last_name }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-xs text-gray-400 py-4 text-center">No timetable slots configured.</p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Student Onboarding Sequential Approvals Queue & Marks Vetting -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Student Vetting Queue (VP Pending -> Principal Pending) -->
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+            <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                <i class="fa-solid fa-user-check text-saffron"></i>
+                <span>VP Pending: Student Registration Approvals</span>
+            </h3>
+            <div class="mt-4 overflow-x-auto">
+                {% if pending_students %}
+                <table class="min-w-full text-left text-xs text-gray-500">
+                    <thead class="text-slate-400 font-bold border-b border-gray-100 bg-gray-50/50">
+                        <tr>
+                            <th class="px-4 py-3">Student</th>
+                            <th class="px-4 py-3">Class/Roll</th>
+                            <th class="px-4 py-3">Class Teacher</th>
+                            <th class="px-4 py-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for student in pending_students %}
+                        <tr>
+                            <td class="px-4 py-3 font-semibold text-slate-800">{{ student.user.get_full_name }}</td>
+                            <td class="px-4 py-3">{{ student.class_name }} / Roll: {{ student.roll_no }}</td>
+                            <td class="px-4 py-3 text-gray-400">{{ student.class_teacher.get_full_name }}</td>
+                            <td class="px-4 py-3 text-right flex justify-end space-x-2">
+                                <form action="{% url 'approve_student' student.id %}" method="POST">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit" class="bg-saffron text-white py-1 px-3 rounded-lg hover:bg-saffron-600 transition font-semibold">
+                                        Approve & Forward
+                                    </button>
+                                </form>
+                                <a href="{% url 'reject_student' student.id %}" class="bg-red-50 text-red-600 py-1 px-2 rounded-lg border border-red-200 hover:bg-red-100 transition">
+                                    Reject
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-xs text-gray-400 py-4 text-center">No student files waiting for VP vetting.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Marks Vetting Queue (pending_vp -> pending_principal) -->
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+            <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                <i class="fa-solid fa-file-signature text-saffron"></i>
+                <span>VP Pending: Academic Marks Vetting</span>
+            </h3>
+            <div class="mt-4 overflow-x-auto">
+                {% if pending_marks %}
+                <table class="min-w-full text-left text-xs text-gray-500">
+                    <thead class="text-slate-400 font-bold border-b border-gray-100 bg-gray-50/50">
+                        <tr>
+                            <th class="px-4 py-3">Student Name</th>
+                            <th class="px-4 py-3">Subject / Class</th>
+                            <th class="px-4 py-3">Total Score</th>
+                            <th class="px-4 py-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for record in pending_marks %}
+                        <tr>
+                            <td class="px-4 py-3 font-semibold text-slate-800">{{ record.student.user.get_full_name }}</td>
+                            <td class="px-4 py-3">{{ record.subject }} ({{ record.student.class_name }})</td>
+                            <td class="px-4 py-3 font-bold">{{ record.grand_total }} / 100</td>
+                            <td class="px-4 py-3 text-right flex justify-end space-x-2">
+                                <a href="{% url 'vet_marks' record.id %}" class="bg-saffron text-white py-1 px-3 rounded-lg hover:bg-saffron-600 transition font-semibold">
+                                    Vet & Forward
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-xs text-gray-400 py-4 text-center">No academic marks waiting for VP vetting.</p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

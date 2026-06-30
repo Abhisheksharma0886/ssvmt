@@ -1,0 +1,94 @@
+{% extends 'portal/base.html' %}
+
+{% block title %}Edit Employee - SSVMT Portal{% endblock %}
+
+{% block header_title %}Edit Employee Profile Record{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl">
+        <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+            <i class="fa-solid fa-user-pen text-saffron"></i>
+            <span>Edit Details: {{ employee.user.get_full_name }}</span>
+        </h3>
+        
+        <form method="POST" class="mt-6 space-y-4">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">First Name</label>
+                    <input type="text" name="first_name" value="{{ employee.user.first_name }}" required class="block w-full py-2.5 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Last Name</label>
+                    <input type="text" name="last_name" value="{{ employee.user.last_name }}" required class="block w-full py-2.5 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 mb-1">Email Address</label>
+                <input type="email" name="email" value="{{ employee.user.email }}" required class="block w-full py-2.5 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Mobile / Phone Number</label>
+                    <input type="text" name="phone_no" value="{{ employee.phone_no }}" required class="block w-full py-2.5 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Role / Designation</label>
+                    <select name="role" id="edit-role-select" onchange="toggleEditClassSelector()" class="block w-full py-2.5 px-3 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-1 focus:ring-saffron">
+                        <option value="vp" {% if employee.role == 'vp' %}selected{% endif %}>Vice-Principal (VP)</option>
+                        <option value="teacher" {% if employee.role == 'teacher' and not employee.is_class_teacher_of %}selected{% endif %}>Teacher / Subject Teacher</option>
+                        <option value="class_teacher" {% if employee.role == 'teacher' and employee.is_class_teacher_of %}selected{% endif %}>Class Teacher</option>
+                        <option value="staff" {% if employee.role == 'staff' %}selected{% endif %}>Staff</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 mb-1">Assigned Subjects (Hold Ctrl/Cmd to select multiple)</label>
+                <select name="assigned_subjects" required multiple class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs bg-white h-24">
+                    {% for sub in subjects %}
+                        <option value="{{ sub }}" {% if sub in current_subjects %}selected{% endif %}>{{ sub }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div id="edit-class-teacher-group" class="{% if employee.is_class_teacher_of %}{% else %}hidden{% endif %}">
+                <label class="block text-xs font-semibold text-gray-500 mb-1">Class Teacher Assignment (Select Class)</label>
+                <select name="is_class_teacher_of" class="block w-full py-2.5 px-3 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-1 focus:ring-saffron">
+                    <option value="">-- Choose Class --</option>
+                    {% for cls in classes %}
+                        <option value="{{ cls }}" {% if employee.is_class_teacher_of == cls %}selected{% endif %}>{{ cls }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="pt-4 flex space-x-3">
+                <a href="/cms/manage-content/?tab=employees" class="w-1/2 py-3 px-4 border border-gray-200 hover:bg-gray-50 text-slate-700 rounded-xl text-xs font-bold text-center transition">
+                    Cancel
+                </a>
+                <button type="submit" class="w-1/2 py-3 px-4 bg-saffron hover:bg-saffron-600 text-white rounded-xl text-xs font-bold transition shadow-md">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleEditClassSelector() {
+        const role = document.getElementById('edit-role-select').value;
+        const group = document.getElementById('edit-class-teacher-group');
+        if (role === 'class_teacher') {
+            group.classList.remove('hidden');
+        } else {
+            group.classList.add('hidden');
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,338 @@
+{% extends 'portal/base.html' %}
+
+{% block title %}Teacher Console - SSVMT Portal{% endblock %}
+
+{% block header_title %}Teacher Console & Gradebook{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- Teacher Brief Info -->
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-lg font-bold text-slate-800">Namaste, {{ user.get_full_name }}!</h2>
+            <p class="text-xs text-gray-400 mt-1">
+                Assigned Subjects: <span class="font-semibold text-saffron">{{ profile.assigned_subjects|default:"None" }}</span>
+            </p>
+        </div>
+        <div class="flex items-center space-x-2">
+            {% if is_class_teacher %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-saffron/10 text-saffron">
+                Class Teacher of {{ my_class }}
+            </span>
+            {% else %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-500">
+                Subject Teacher
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- SUBJECT TEACHER: Course Marks Entry Panel -->
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+            <i class="fa-solid fa-graduation-cap text-saffron"></i>
+            <span>Course Gradebooks (My Assigned Subjects)</span>
+        </h3>
+        <p class="text-xs text-gray-400 mt-1">You are strictly confined to enter marks for subjects registered in your domain.</p>
+        
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {% if assigned_subs %}
+                {% for subject in assigned_subs %}
+                <div class="p-4 bg-gray-50 border border-gray-100 rounded-2xl flex flex-col justify-between">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Subject</span>
+                        <h4 class="text-sm font-bold text-slate-800 mt-0.5">{{ subject }}</h4>
+                    </div>
+                    <form action="{% url 'marks_entry' %}" method="GET" class="mt-4">
+                        <input type="hidden" name="subject" value="{{ subject }}">
+                        <div class="flex space-x-2">
+                            <select name="class_name" required class="w-full py-1.5 px-2 bg-white border border-gray-200 rounded-lg text-xs focus:outline-none">
+                                <option value="Class I">Class I</option>
+                                <option value="Class II">Class II</option>
+                                <option value="Class III">Class III</option>
+                                <option value="Class IV">Class IV</option>
+                                <option value="Class V">Class V</option>
+                                <option value="Class VI">Class VI</option>
+                                <option value="Class VII">Class VII</option>
+                                <option value="Class VIII">Class VIII</option>
+                                <option value="Class IX">Class IX</option>
+                                <option value="Class X">Class X</option>
+                            </select>
+                            <button type="submit" class="bg-saffron text-white py-1 px-3 rounded-lg text-xs font-semibold hover:bg-saffron-600 transition">
+                                Open
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-xs text-gray-400 col-span-full">No subjects assigned. Contact Principal to update your profile.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- CLASS TEACHER SECTIONS -->
+    {% if is_class_teacher %}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Onboard Student Form -->
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm lg:col-span-1">
+            <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                <i class="fa-solid fa-user-plus text-saffron"></i>
+                <span>Onboard Student ({{ my_class }})</span>
+            </h3>
+            <form action="{% url 'onboard_student' %}" method="POST" class="mt-4 space-y-3.5">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase">Username / Login ID</label>
+                    <input type="text" name="username" required class="mt-1 block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase">First Name</label>
+                        <input type="text" name="first_name" required class="mt-1 block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase">Last Name</label>
+                        <input type="text" name="last_name" required class="mt-1 block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase">Password</label>
+                        <input type="password" name="password" required class="mt-1 block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase">Admission No</label>
+                        <input type="text" name="admission_no" required class="mt-1 block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase">Roll No</label>
+                        <input type="text" name="roll_no" required class="mt-1 block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase">Date of Birth</label>
+                        <input type="date" name="dob" required class="mt-1 block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase">Father's Name</label>
+                    <input type="text" name="father_name" required class="mt-1 block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase">Mother's Name</label>
+                    <input type="text" name="mother_name" required class="mt-1 block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase">Mobile Number</label>
+                    <input type="text" name="mobile_no" required class="mt-1 block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase">Residential Address</label>
+                    <textarea name="address" rows="2" required class="mt-1 block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs"></textarea>
+                </div>
+                <button type="submit" class="w-full py-3 px-4 bg-saffron hover:bg-saffron-600 text-white rounded-xl text-xs font-semibold transition-all">
+                    Register Draft Profile
+                </button>
+            </form>
+        </div>
+
+        <!-- Student Attendance Sheet & Approvals Queue -->
+        <div class="lg:col-span-2 space-y-8">
+            
+            <!-- Daily Attendance Marking Form -->
+            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center justify-between">
+                    <span class="flex items-center space-x-2">
+                        <i class="fa-solid fa-clipboard-user text-saffron"></i>
+                        <span>Daily Attendance Register ({{ my_class }})</span>
+                    </span>
+                    <span class="text-xs text-gray-400 font-medium">Date: {% now "d-m-Y" %}</span>
+                </h3>
+                
+                {% if class_students %}
+                    <form action="{% url 'mark_attendance' %}" method="POST" class="mt-4">
+                        {% csrf_token %}
+                        <div class="overflow-x-auto max-h-[300px]">
+                            <table class="min-w-full text-left text-xs text-gray-500">
+                                <thead class="text-slate-400 font-bold uppercase border-b border-gray-100 bg-gray-50/50">
+                                    <tr>
+                                        <th class="px-4 py-3">Roll No</th>
+                                        <th class="px-4 py-3">Student Name</th>
+                                        <th class="px-4 py-3 text-right">Attendance Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50">
+                                    {% for student in class_students %}
+                                    <tr>
+                                        <td class="px-4 py-3 font-semibold text-slate-800">{{ student.roll_no }}</td>
+                                        <td class="px-4 py-3 font-medium text-slate-700">{{ student.user.get_full_name }}</td>
+                                        <td class="px-4 py-3 text-right">
+                                            <select name="attendance_{{ student.id }}" class="py-1 px-2 border border-gray-200 rounded-lg text-xs bg-white focus:outline-none">
+                                                <option value="present" {% if student.today_status == 'present' %}selected{% endif %}>Present</option>
+                                                <option value="absent" {% if student.today_status == 'absent' %}selected{% endif %}>Absent</option>
+                                                <option value="late" {% if student.today_status == 'late' %}selected{% endif %}>Late</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <button type="submit" class="bg-saffron text-white py-2 px-5 rounded-xl text-xs font-semibold hover:bg-saffron-600 transition shadow-md shadow-saffron/10">
+                                Submit Daily Attendance
+                            </button>
+                        </div>
+                    </form>
+                {% else %}
+                    <p class="text-xs text-gray-400 py-6 text-center">No active students registered in your class to mark attendance.</p>
+                {% endif %}
+            </div>
+
+            <!-- Student Profiles State Queue (Draft -> VP Approval Submission) -->
+            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                    <i class="fa-solid fa-spinner text-saffron"></i>
+                    <span>Onboarding Profiles Status Ledger</span>
+                </h3>
+                <div class="mt-4 overflow-x-auto">
+                    {% if pending_class_onboarding %}
+                    <table class="min-w-full text-left text-xs text-gray-500">
+                        <thead class="text-slate-400 font-bold border-b border-gray-100 bg-gray-50/50">
+                            <tr>
+                                <th class="px-4 py-3">Student Name</th>
+                                <th class="px-4 py-3">Admission No</th>
+                                <th class="px-4 py-3">Current Pipeline State</th>
+                                <th class="px-4 py-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            {% for student in pending_class_onboarding %}
+                            <tr>
+                                <td class="px-4 py-3 font-semibold text-slate-800">{{ student.user.get_full_name }}</td>
+                                <td class="px-4 py-3">{{ student.admission_no }}</td>
+                                <td class="px-4 py-3">
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider {% if student.status == 'draft' %}bg-gray-100 text-gray-600{% elif student.status == 'vp_pending' %}bg-purple-50 text-purple-600{% else %}bg-yellow-50 text-yellow-600{% endif %}">
+                                        {{ student.status|upper }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    {% if student.status == 'draft' %}
+                                    <a href="{% url 'submit_student_to_vp' student.id %}" class="bg-slate-900 text-white hover:bg-slate-800 py-1 px-3 rounded-lg font-semibold transition text-[11px]">
+                                        Submit to VP Vetting
+                                    </a>
+                                    {% else %}
+                                    <span class="text-gray-400 italic">Vetting In-Progress</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-xs text-gray-400 py-4 text-center">No student files currently undergoing onboarding verification.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Student Leave Approvals Registry (CT approves -> Approved status) -->
+            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                    <i class="fa-solid fa-envelope-open-text text-saffron"></i>
+                    <span>Leave Requests Inbox ({{ my_class }})</span>
+                </h3>
+                <div class="mt-4 overflow-x-auto">
+                    {% if leaves_to_approve %}
+                    <table class="min-w-full text-left text-xs text-gray-500">
+                        <thead class="text-slate-400 font-bold border-b border-gray-100 bg-gray-50/50">
+                            <tr>
+                                <th class="px-4 py-3">Student</th>
+                                <th class="px-4 py-3">Duration</th>
+                                <th class="px-4 py-3">Reason</th>
+                                <th class="px-4 py-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            {% for leave in leaves_to_approve %}
+                            <tr>
+                                <td class="px-4 py-3.5 font-semibold text-slate-800">{{ leave.student.user.get_full_name }}</td>
+                                <td class="px-4 py-3.5 font-medium">{{ leave.start_date|date:"d-m-y" }} to {{ leave.end_date|date:"d-m-y" }} ({{ leave.duration_days }} days)</td>
+                                <td class="px-4 py-3.5 text-gray-600 max-w-xs truncate">{{ leave.reason }}</td>
+                                <td class="px-4 py-3.5 text-right flex justify-end space-x-2">
+                                    <a href="{% url 'approve_leave' leave.id %}" class="bg-saffron text-white py-1 px-3 rounded-lg hover:bg-saffron-600 transition font-semibold">
+                                        Approve
+                                    </a>
+                                    <a href="{% url 'reject_leave' leave.id %}" class="bg-red-50 text-red-600 py-1 px-2.5 rounded-lg border border-red-200 hover:bg-red-100 transition">
+                                        Reject
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-xs text-gray-400 py-4 text-center">No student leaves waiting for your review.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Profile Edit Requests Verification Form (CT reviews & forwards) -->
+            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                    <i class="fa-solid fa-user-pen text-saffron"></i>
+                    <span>Student Profile Edit Requests (CT Review & Forward)</span>
+                </h3>
+                <div class="mt-4 overflow-x-auto">
+                    {% if edit_requests_to_review %}
+                    <table class="min-w-full text-left text-xs text-gray-500">
+                        <thead class="text-slate-400 font-bold border-b border-gray-100 bg-gray-50/50">
+                            <tr>
+                                <th class="px-4 py-3">Student Name</th>
+                                <th class="px-4 py-3">Proposed Edits</th>
+                                <th class="px-4 py-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            {% for edit in edit_requests_to_review %}
+                            <tr>
+                                <td class="px-4 py-3.5 font-semibold text-slate-800">{{ edit.student.user.get_full_name }}</td>
+                                <td class="px-4 py-3.5 font-mono text-[10px]">
+                                    <div class="bg-gray-50 p-2 rounded-xl border border-gray-100">
+                                        {% for key, val in edit.get_data_dict.items %}
+                                            <div><strong>{{ key }}:</strong> <span class="text-saffron">{{ val }}</span></div>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3.5 text-right flex justify-end space-x-2">
+                                    <form action="{% url 'edit_profile_request' %}" method="POST">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="request_id" value="{{ edit.id }}">
+                                        <button type="submit" class="bg-saffron text-white py-1 px-3 rounded-lg hover:bg-saffron-600 transition font-semibold">
+                                            Forward to Principal
+                                        </button>
+                                    </form>
+                                    <a href="{% url 'reject_edit_request' edit.id %}" class="bg-red-50 text-red-600 py-1 px-2.5 rounded-lg border border-red-200 hover:bg-red-100 transition">
+                                        Reject
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-xs text-gray-400 py-4 text-center">No student profile edit requests to review.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

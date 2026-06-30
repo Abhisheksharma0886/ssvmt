@@ -1,0 +1,103 @@
+{% extends 'portal/base.html' %}
+
+{% block title %}Edit Student - SSVMT Portal{% endblock %}
+
+{% block header_title %}Edit Student Profile Record{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl">
+        <h3 class="text-base font-bold text-slate-800 border-b border-gray-100 pb-3 flex items-center space-x-2">
+            <i class="fa-solid fa-user-pen text-saffron"></i>
+            <span>Edit Details: {{ student.user.get_full_name }}</span>
+        </h3>
+        
+        <form method="POST" class="mt-6 space-y-4">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">First Name</label>
+                    <input type="text" name="first_name" value="{{ student.user.first_name }}" required class="block w-full py-2.5 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Last Name</label>
+                    <input type="text" name="last_name" value="{{ student.user.last_name }}" required class="block w-full py-2.5 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 mb-1">Email Address</label>
+                <input type="email" name="email" value="{{ student.user.email }}" required class="block w-full py-2.5 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Roll Number</label>
+                    <input type="text" name="roll_no" value="{{ student.roll_no }}" required class="block w-full py-2.5 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Admission Number</label>
+                    <input type="text" name="admission_no" value="{{ student.admission_no }}" required class="block w-full py-2.5 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Class Assigned</label>
+                    <select name="class_name" required class="block w-full py-2.5 px-3 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-1 focus:ring-saffron">
+                        {% for cls in classes %}
+                            <option value="{{ cls }}" {% if student.class_name == cls %}selected{% endif %}>{{ cls }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Date of Birth</label>
+                    <input type="date" name="dob" value="{{ student.dob|date:'Y-m-d' }}" class="block w-full py-2.5 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Father's Name</label>
+                    <input type="text" name="father_name" value="{{ student.father_name }}" required class="block w-full py-2.5 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Mother's Name</label>
+                    <input type="text" name="mother_name" value="{{ student.mother_name }}" required class="block w-full py-2.5 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Mobile Number</label>
+                    <input type="text" name="mobile_no" value="{{ student.mobile_no }}" required class="block w-full py-2.5 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Account Pipeline Status</label>
+                    <select name="status" required class="block w-full py-2.5 px-3 border border-gray-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-1 focus:ring-saffron">
+                        <option value="draft" {% if student.status == 'draft' %}selected{% endif %}>Draft</option>
+                        <option value="vp_pending" {% if student.status == 'vp_pending' %}selected{% endif %}>VP Pending</option>
+                        <option value="principal_pending" {% if student.status == 'principal_pending' %}selected{% endif %}>Principal Pending</option>
+                        <option value="active" {% if student.status == 'active' %}selected{% endif %}>Active</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 mb-1">Residential Address</label>
+                <textarea name="address" rows="3" required class="block w-full py-2.5 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">{{ student.address }}</textarea>
+            </div>
+
+            <div class="pt-4 flex space-x-3">
+                <a href="/cms/manage-content/?tab=students" class="w-1/2 py-3 px-4 border border-gray-200 hover:bg-gray-50 text-slate-700 rounded-xl text-xs font-bold text-center transition">
+                    Cancel
+                </a>
+                <button type="submit" class="w-1/2 py-3 px-4 bg-saffron hover:bg-saffron-600 text-white rounded-xl text-xs font-bold transition shadow-md">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
