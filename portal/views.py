@@ -292,6 +292,56 @@ def cms_delete_notice_view(request, notice_id):
     return redirect('dashboard')
 
 
+@role_required(['principal'])
+def cms_delete_logo_view(request):
+    config = get_site_config()
+    if config.logo:
+        try:
+            config.logo.delete(save=False)
+        except Exception:
+            pass
+        config.logo = None
+        config.save()
+        messages.success(request, "School Logo deleted successfully. Reverted to static fallback.")
+    else:
+        messages.info(request, "No custom logo currently uploaded.")
+    
+    referer = request.META.get('HTTP_REFERER', 'dashboard')
+    return redirect(referer)
+
+
+@role_required(['principal'])
+def cms_delete_principal_photo_view(request):
+    config = get_site_config()
+    if config.principal_photo:
+        try:
+            config.principal_photo.delete(save=False)
+        except Exception:
+            pass
+        config.principal_photo = None
+        config.save()
+        messages.success(request, "Principal Photo deleted successfully. Reverted to static fallback.")
+    else:
+        messages.info(request, "No custom Principal photo currently uploaded.")
+        
+    referer = request.META.get('HTTP_REFERER', 'dashboard')
+    return redirect(referer)
+
+
+@role_required(['principal'])
+def cms_delete_carousel_view(request, slide_id):
+    slide = get_object_or_404(CarouselImage, id=slide_id)
+    try:
+        slide.image.delete(save=False)
+    except Exception:
+        pass
+    slide.delete()
+    messages.success(request, f"Carousel Slide #{slide.order} deleted successfully.")
+    
+    referer = request.META.get('HTTP_REFERER', 'dashboard')
+    return redirect(referer)
+
+
 # VP DASHBOARD
 def vp_dashboard(request, config):
     timetables = Timetable.objects.all().order_by('class_name', 'day_of_week', 'period_number')

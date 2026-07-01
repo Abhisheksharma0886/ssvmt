@@ -63,6 +63,9 @@ urlpatterns = [
     path('cms/upload-carousel/', views.cms_upload_carousel_view, name='cms_upload_carousel'),
     path('cms/add-notice/', views.cms_add_notice_view, name='cms_add_notice'),
     path('cms/delete-notice/<int:notice_id>/', views.cms_delete_notice_view, name='cms_delete_notice'),
+    path('cms/delete-logo/', views.cms_delete_logo_view, name='cms_delete_logo'),
+    path('cms/delete-principal-photo/', views.cms_delete_principal_photo_view, name='cms_delete_principal_photo'),
+    path('cms/delete-carousel/<int:slide_id>/', views.cms_delete_carousel_view, name='cms_delete_carousel'),
     
     # Principal CMS Management Sub-options & student onboarding
     path('submit-student-to-vp/<int:student_id>/', views.submit_student_to_vp_view, name='submit_student_to_vp'),

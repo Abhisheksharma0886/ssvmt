@@ -149,7 +149,12 @@
                     {% for notice in notices %}
                     <div class="p-3.5 bg-saffron/5 border border-saffron/10 rounded-2xl">
                         <div class="flex justify-between items-start">
-                            <span class="text-[9px] uppercase tracking-wider bg-saffron text-white py-0.5 px-2 rounded-full font-bold">Circular</span>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-[9px] uppercase tracking-wider bg-saffron text-white py-0.5 px-2 rounded-full font-bold">Circular</span>
+                                <button onclick="shareCircular(this)" data-title="{{ notice.title|escapejs }}" data-content="{{ notice.content|escapejs }}" data-date="{{ notice.created_at|date:'d-m-Y' }}" class="text-slate-500 hover:text-saffron transition text-[9px] font-bold flex items-center space-x-1">
+                                    <i class="fa-solid fa-share-nodes"></i> <span>Share</span>
+                                </button>
+                            </div>
                             <span class="text-[9px] text-gray-400">{{ notice.created_at|date:"d-m-Y" }}</span>
                         </div>
                         <h4 class="text-xs font-bold text-slate-800 mt-2">{{ notice.title }}</h4>
@@ -279,6 +284,145 @@
             showSlide(0);
             setInterval(nextSlide, 5000);
         }
+    </script>
+
+    <!-- Circular Share Modal -->
+    <div id="share-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
+                <h4 class="text-sm font-bold text-slate-800 flex items-center space-x-2">
+                    <i class="fa-solid fa-share-nodes text-saffron"></i>
+                    <span>Share Notice Circular</span>
+                </h4>
+                <button onclick="closeShareModal()" class="text-gray-400 hover:text-gray-600 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <!-- Printable Circular Preview -->
+            <div class="p-6 overflow-y-auto flex-1 bg-gray-50 flex justify-center">
+                <div id="printable-circular" class="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 w-full max-w-md font-sans text-slate-800 relative">
+                    <!-- Circular Header (School info and logo) -->
+                    <div id="circular-header" class="flex flex-col items-center text-center border-b-2 border-slate-900 pb-3 mb-4">
+                        <img id="share-logo" src="{{ config.logo_url }}" class="w-14 h-14 rounded-xl object-cover mb-1">
+                        <h2 class="text-sm font-black text-slate-900 tracking-wide">SARASWATI SHISHU VIDYA MANDIR</h2>
+                        <p class="text-[9px] font-bold text-saffron uppercase tracking-wider">Tamar, Ranchi, Jharkhand</p>
+                    </div>
+                    
+                    <!-- Circular Content -->
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center text-[9px] text-gray-500 font-bold border-b border-gray-100 pb-1.5">
+                            <span>Ref: SSVMT/CIRCULAR/{% now "Y" %}</span>
+                            <span id="share-date"></span>
+                        </div>
+                        
+                        <h3 id="share-title" class="text-xs font-black text-center text-slate-900 uppercase tracking-tight py-1 underline"></h3>
+                        
+                        <p id="share-content" class="text-[10px] text-slate-700 leading-relaxed text-justify whitespace-pre-wrap"></p>
+                    </div>
+                    
+                    <!-- Signoff -->
+                    <div class="mt-6 pt-3 flex flex-col items-end text-right text-[10px]">
+                        <span class="font-bold text-slate-800">By Order,</span>
+                        <span class="font-black text-slate-900 mt-3">Principal</span>
+                        <span class="text-[8px] text-gray-400">SSVMT Tamar</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Controls & Footer -->
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-between items-center bg-slate-50 text-xs">
+                <label class="flex items-center space-x-2 font-semibold text-gray-600 cursor-pointer">
+                    <input type="checkbox" id="toggle-logo-checkbox" checked onchange="toggleShareLogo(this.checked)" class="w-4 h-4 text-saffron rounded border-gray-300 focus:ring-saffron">
+                    <span>Include School Logo & Header</span>
+                </label>
+                <div class="flex space-x-3">
+                    <button onclick="closeShareModal()" class="px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl font-bold transition">
+                        Close
+                    </button>
+                    <button onclick="printCircular()" class="px-5 py-2 bg-saffron hover:bg-saffron-600 text-white rounded-xl font-bold transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-print"></i> <span>Print</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        #share-modal, #share-modal * {
+            visibility: visible;
+        }
+        #share-modal {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: auto;
+            background: none !important;
+            backdrop-filter: none !important;
+            display: block !important;
+            padding: 0 !important;
+        }
+        #share-modal > div {
+            box-shadow: none !important;
+            max-width: 100% !important;
+            max-height: none !important;
+            border: none !important;
+        }
+        /* Hide Modal headers & footers for printing */
+        #share-modal > div > div:first-child,
+        #share-modal > div > div:last-child {
+            display: none !important;
+        }
+        #printable-circular {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 auto !important;
+            width: 100% !important;
+            max-width: 600px !important;
+        }
+    }
+    </style>
+
+    <script>
+    function shareCircular(btn) {
+        const title = btn.getAttribute('data-title');
+        const content = btn.getAttribute('data-content');
+        const date = btn.getAttribute('data-date');
+        
+        document.getElementById('share-title').textContent = title;
+        document.getElementById('share-content').textContent = content;
+        document.getElementById('share-date').textContent = "Date: " + date;
+        
+        // Reset checkbox to checked
+        document.getElementById('toggle-logo-checkbox').checked = true;
+        document.getElementById('circular-header').classList.remove('hidden');
+        
+        document.getElementById('share-modal').classList.remove('hidden');
+    }
+
+    function closeShareModal() {
+        document.getElementById('share-modal').classList.add('hidden');
+    }
+
+    function toggleShareLogo(checked) {
+        const header = document.getElementById('circular-header');
+        if (checked) {
+            header.classList.remove('hidden');
+        } else {
+            header.classList.add('hidden');
+        }
+    }
+
+    function printCircular() {
+        window.print();
+    }
     </script>
 
 </body>

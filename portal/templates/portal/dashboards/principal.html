@@ -7,6 +7,13 @@
 <!-- Cropper.js CDN links -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+<style>
+/* Circular Cropper Selection overlay */
+.cropper-circle .cropper-view-box,
+.cropper-circle .cropper-face {
+    border-radius: 50%;
+}
+</style>
 {% endblock %}
 
 {% block header_title %}Principal Portal Master Cockpit{% endblock %}
@@ -325,7 +332,14 @@
                     {% csrf_token %}
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 mb-1">School Logo (1:1 Ratio)</label>
-                        <img src="{{ config.logo_url }}" alt="Logo" class="w-12 h-12 rounded-xl object-cover mb-2 border">
+                        <div class="flex items-center space-x-4 mb-2">
+                            <img src="{{ config.logo_url }}" alt="Logo" class="w-12 h-12 rounded-xl object-cover border">
+                            {% if config.logo %}
+                                <a href="{% url 'cms_delete_logo' %}" class="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-[9px] font-bold transition flex items-center space-x-1">
+                                    <i class="fa-solid fa-trash-can"></i> <span>Delete Custom Logo</span>
+                                </a>
+                            {% endif %}
+                        </div>
                         <input type="file" name="logo" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-saffron/10 file:text-saffron hover:file:bg-saffron/20">
                     </div>
                     <div>
@@ -334,7 +348,14 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 mb-1">Principal Desk Photo (1:1 Square cropped)</label>
-                        <img src="{{ config.principal_photo_url }}" alt="Photo" class="w-16 h-16 rounded-2xl object-cover mb-2 border">
+                        <div class="flex items-center space-x-4 mb-2">
+                            <img src="{{ config.principal_photo_url }}" alt="Photo" class="w-16 h-16 rounded-2xl object-cover border">
+                            {% if config.principal_photo %}
+                                <a href="{% url 'cms_delete_principal_photo' %}" class="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-[9px] font-bold transition flex items-center space-x-1">
+                                    <i class="fa-solid fa-trash-can"></i> <span>Delete Custom Photo</span>
+                                </a>
+                            {% endif %}
+                        </div>
                         <input type="file" name="principal_photo" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-saffron/10 file:text-saffron hover:file:bg-saffron/20">
                     </div>
                     <div>
@@ -389,12 +410,17 @@
                     <span class="text-[10px] uppercase font-bold text-slate-400">Current Active Carousel Slides</span>
                     {% if carousel_slides %}
                         {% for slide in carousel_slides %}
-                        <div class="p-3 bg-gray-50 border border-gray-100 rounded-2xl flex items-center space-x-3 text-xs">
-                            <img src="{{ slide.image.url }}" class="w-12 h-8 rounded-lg object-cover">
-                            <div class="overflow-hidden">
-                                <span class="font-bold text-saffron">Order {{ slide.order }}</span>
-                                <p class="text-[10px] text-gray-500 truncate mt-0.5">{{ slide.caption }}</p>
+                        <div class="p-3 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-between text-xs">
+                            <div class="flex items-center space-x-3 overflow-hidden">
+                                <img src="{{ slide.image.url }}" class="w-12 h-8 rounded-lg object-cover flex-shrink-0">
+                                <div class="overflow-hidden">
+                                    <span class="font-bold text-saffron">Order {{ slide.order }}</span>
+                                    <p class="text-[10px] text-gray-500 truncate mt-0.5">{{ slide.caption }}</p>
+                                </div>
                             </div>
+                            <a href="{% url 'cms_delete_carousel' slide.id %}" class="text-red-500 hover:text-red-700 flex-shrink-0 ml-2">
+                                <i class="fa-solid fa-trash-can text-sm"></i>
+                            </a>
                         </div>
                         {% endfor %}
                     {% else %}
@@ -515,9 +541,15 @@
         </div>
         
         <!-- Controls & Footer -->
-        <div class="px-6 py-4 border-t border-gray-100 flex justify-between items-center bg-slate-50 text-xs">
-            <span class="text-gray-500 font-medium">Use the handles to crop your image.</span>
-            <div class="flex space-x-3">
+        <div class="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center bg-slate-50 gap-4 text-xs">
+            <div class="flex items-center space-x-3">
+                <span class="text-gray-500 font-semibold">Crop Shape:</span>
+                <div class="inline-flex rounded-xl p-0.5 bg-gray-100 border border-gray-200">
+                    <button type="button" id="crop-shape-square" onclick="setCropShape('square')" class="px-3 py-1.5 rounded-lg font-bold bg-white shadow-sm text-slate-800 transition">Square</button>
+                    <button type="button" id="crop-shape-circle" onclick="setCropShape('circle')" class="px-3 py-1.5 rounded-lg font-bold text-gray-500 hover:text-slate-800 transition">Circle</button>
+                </div>
+            </div>
+            <div class="flex space-x-3 w-full sm:w-auto justify-end">
                 <button type="button" onclick="closeCropperModal()" class="px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl font-bold transition">
                     Cancel
                 </button>
@@ -532,10 +564,15 @@
 <script>
 let currentCropper = null;
 let currentCropCallback = null;
+let currentCropShape = 'square';
+let originalAspectRatio = 1;
 
 function openCropperModal(file, aspectRatio, callback) {
     const modal = document.getElementById('cropper-modal');
     const image = document.getElementById('cropper-image');
+    
+    originalAspectRatio = aspectRatio;
+    setCropShape('square');
     
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -569,18 +606,64 @@ function closeCropperModal() {
     currentCropCallback = null;
 }
 
+function setCropShape(shape) {
+    currentCropShape = shape;
+    const squareBtn = document.getElementById('crop-shape-square');
+    const circleBtn = document.getElementById('crop-shape-circle');
+    const container = document.querySelector('.cropper-container');
+    
+    if (shape === 'circle') {
+        squareBtn.className = "px-3 py-1.5 rounded-lg font-bold text-gray-500 hover:text-slate-800 transition";
+        circleBtn.className = "px-3 py-1.5 rounded-lg font-bold bg-white shadow-sm text-slate-800 transition";
+        if (container) container.classList.add('cropper-circle');
+        if (currentCropper) {
+            currentCropper.setAspectRatio(1); // Circle must be 1:1
+        }
+    } else {
+        squareBtn.className = "px-3 py-1.5 rounded-lg font-bold bg-white shadow-sm text-slate-800 transition";
+        circleBtn.className = "px-3 py-1.5 rounded-lg font-bold text-gray-500 hover:text-slate-800 transition";
+        if (container) container.classList.remove('cropper-circle');
+        if (currentCropper) {
+            currentCropper.setAspectRatio(originalAspectRatio);
+        }
+    }
+}
+
+function getRoundedCanvas(sourceCanvas) {
+    var canvas = document.createElement('canvas');
+    var context = canvas.getContext('2d');
+    var width = sourceCanvas.width;
+    var height = sourceCanvas.height;
+
+    canvas.width = width;
+    canvas.height = height;
+    context.imageSmoothingEnabled = true;
+    context.drawImage(sourceCanvas, 0, 0);
+    context.globalCompositeOperation = 'destination-in';
+    context.beginPath();
+    context.arc(width / 2, height / 2, Math.min(width, height) / 2, 0, 2 * Math.PI, true);
+    context.fill();
+    return canvas;
+}
+
 document.getElementById('cropper-save-btn').addEventListener('click', function() {
     if (currentCropper && currentCropCallback) {
-        const canvas = currentCropper.getCroppedCanvas({
+        let canvas = currentCropper.getCroppedCanvas({
             maxWidth: 1200,
             maxHeight: 1200
         });
         
         if (canvas) {
+            let mimeType = 'image/jpeg';
+            if (currentCropShape === 'circle') {
+                canvas = getRoundedCanvas(canvas);
+                mimeType = 'image/png'; // PNG supports transparent corners
+            }
+            
             canvas.toBlob(function(blob) {
                 currentCropCallback(blob);
                 closeCropperModal();
-            }, 'image/jpeg', 0.95);
+            }, mimeType, 0.95);
         }
     }
 });
