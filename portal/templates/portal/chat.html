@@ -4,11 +4,17 @@
 
 {% block header_title %}Internal Verified Message Center{% endblock %}
 
+{% block main_wrapper_class %}flex-1 flex flex-col min-w-0 overflow-x-hidden h-[calc(100vh-theme(spacing.header))] md:h-screen overflow-hidden{% endblock %}
+
+{% block main_class %}flex-1 p-0 md:p-8 flex flex-col{% endblock %}
+
+{% block footer %}{% endblock %}
+
 {% block content %}
-<div class="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden flex flex-col md:flex-row h-[calc(100vh-190px)] min-h-[500px]">
+<div class="bg-white rounded-none md:rounded-3xl border-0 md:border border-gray-100 shadow-none md:shadow-xl overflow-hidden flex flex-col md:flex-row h-full md:h-[calc(100vh-190px)] min-h-0 md:min-h-[500px]">
 
     <!-- Contacts list sidebar -->
-    <div class="w-full md:w-80 border-r border-gray-100 flex flex-col bg-gray-50/50">
+    <div class="{% if active_contact or is_superuser_feed %}hidden md:flex{% else %}flex{% endif %} w-full md:w-80 border-r border-gray-100 flex-col bg-gray-50/50">
         <div class="p-4 border-b border-gray-100 bg-white">
             <h3 class="font-bold text-slate-800 flex items-center space-x-2">
                 <i class="fa-solid fa-address-book text-saffron"></i>
@@ -53,7 +59,7 @@
     </div>
 
     <!-- Active Chat Room area -->
-    <div class="flex-1 flex flex-col justify-between bg-white h-full">
+    <div class="{% if active_contact or is_superuser_feed %}flex{% else %}hidden md:flex{% endif %} flex-1 flex-col justify-between bg-white h-full min-h-0">
         {% if is_superuser_feed %}
             <!-- Super Admin Chat Auditor Feed Header -->
             <div class="p-4 border-b border-gray-100 flex items-center justify-between bg-white z-10">
@@ -88,13 +94,16 @@
                 {% endif %}
             </div>
             <!-- Empty bottom footer with disclaimer -->
-            <div class="p-4 border-t border-gray-100 bg-gray-50/50 text-center text-[10px] text-gray-400">
+            <div class="p-4 pb-safe border-t border-gray-100 bg-gray-50/50 text-center text-[10px] text-gray-400">
                 Superuser accounts are in read-only audit mode and cannot send messages.
             </div>
         {% elif active_contact %}
             <!-- Chat Partner Header -->
             <div class="p-4 border-b border-gray-100 flex items-center justify-between bg-white z-10">
                 <div class="flex items-center space-x-3">
+                    <a href="{% url 'chat_inbox' %}" class="md:hidden text-gray-400 hover:text-slate-700 pr-2">
+                        <i class="fa-solid fa-arrow-left text-lg"></i>
+                    </a>
                     <div class="w-10 h-10 rounded-full bg-saffron/10 text-saffron flex items-center justify-center font-bold uppercase text-sm">
                         {{ active_contact.username|slice:":2" }}
                     </div>
@@ -132,7 +141,7 @@
             </div>
 
             <!-- Message Input Composer Bar -->
-            <div class="p-4 border-t border-gray-100 bg-white">
+            <div class="p-4 pb-safe border-t border-gray-100 bg-white">
                 <form action="{% url 'chat_detail' active_contact.id %}" method="POST" class="flex items-center space-x-3">
                     {% csrf_token %}
                     <input type="text" name="content" required placeholder="Type a verified message..." class="flex-1 py-3 px-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs transition">

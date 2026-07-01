@@ -27,6 +27,9 @@
                     },
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
+                    },
+                    spacing: {
+                        header: '56px',
                     }
                 }
             }
@@ -54,6 +57,15 @@
         }
         ::-webkit-scrollbar-thumb:hover {
             background: #cc5200;
+        }
+        /* Safe area padding utilities for mobile viewports */
+        .pb-safe {
+            padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+        }
+        @media (min-width: 768px) {
+            .pb-safe {
+                padding-bottom: 1.5rem;
+            }
         }
     </style>
     {% block extra_head %}{% endblock %}
@@ -179,7 +191,7 @@
     </aside>
 
     <!-- Main Workspace Content Frame -->
-    <div class="flex-1 flex flex-col min-w-0 overflow-x-hidden h-screen overflow-y-auto">
+    <div class="{% block main_wrapper_class %}flex-1 flex flex-col min-w-0 overflow-x-hidden h-[calc(100vh-theme(spacing.header))] md:h-screen overflow-y-auto{% endblock %}">
         <!-- Top Toolbar Header -->
         <header class="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between shadow-sm hidden md:flex">
             <div>
@@ -198,7 +210,7 @@
         </header>
 
         <!-- Dynamic Page Workspace -->
-        <main class="flex-1 p-4 md:p-8">
+        <main class="{% block main_class %}flex-1 p-4 md:p-8{% endblock %}">
             <!-- Alert Messages -->
             {% if messages %}
             <div class="mb-6 space-y-2">
@@ -220,9 +232,11 @@
         </main>
 
         <!-- Footer -->
+        {% block footer %}
         <footer class="bg-white border-t border-gray-100 py-4 px-6 text-center text-xs text-gray-400">
             &copy; 2026 Saraswati Shishu Vidya Mandir Tamar Portal. Ranchi, Jharkhand. All Rights Reserved.
         </footer>
+        {% endblock %}
     </div>
 
     <!-- Mobile Menu Script Toggle -->
