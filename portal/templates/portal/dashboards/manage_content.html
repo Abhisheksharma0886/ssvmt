@@ -229,6 +229,7 @@
                 <thead class="bg-gray-50 text-slate-400 font-bold border-b">
                     <tr>
                         <th class="px-4 py-3">Admission No</th>
+                        <th class="px-4 py-3">Username</th>
                         <th class="px-4 py-3">Name</th>
                         <th class="px-4 py-3">Class / Roll</th>
                         <th class="px-4 py-3">Father Name</th>
@@ -240,6 +241,7 @@
                     {% for student in students %}
                     <tr>
                         <td class="px-4 py-3 font-mono font-bold">{{ student.admission_no }}</td>
+                        <td class="px-4 py-3 font-mono font-bold">{{ student.user.username }}</td>
                         <td class="px-4 py-3 font-semibold text-slate-800">{{ student.user.get_full_name }}</td>
                         <td class="px-4 py-3">{{ student.class_name }} / Roll: {{ student.roll_no }}</td>
                         <td class="px-4 py-3">{{ student.father_name }}</td>

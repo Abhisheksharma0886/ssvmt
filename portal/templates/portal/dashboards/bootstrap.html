@@ -57,6 +57,13 @@
             
             <form action="{% url 'bootstrap_principal' %}" method="POST" class="mt-6 space-y-4">
                 {% csrf_token %}
+                <div id="username-preview-box" class="bg-saffron/10 text-saffron font-bold text-xs p-3.5 rounded-xl border border-saffron/20 flex items-center justify-between">
+                    <span class="flex items-center space-x-1.5">
+                        <i class="fa-solid fa-user-tag"></i>
+                        <span>Auto-Generated Username:</span>
+                    </span>
+                    <span id="username-preview" class="font-mono bg-white text-slate-800 px-2 py-0.5 rounded border border-gray-150 shadow-sm lowercase">...</span>
+                </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 mb-1">First Name</label>
@@ -88,4 +95,20 @@
     </div>
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const firstNameInput = document.querySelector('form input[name="first_name"]');
+        const usernamePreview = document.getElementById('username-preview');
+        if (firstNameInput && usernamePreview) {
+            firstNameInput.addEventListener('input', function() {
+                const val = firstNameInput.value;
+                const sanitized = val.toLowerCase().replace(/[^a-z0-9]/g, '');
+                usernamePreview.textContent = sanitized ? `${sanitized}.ssvmt` : '...';
+            });
+        }
+    });
+</script>
 {% endblock %}
