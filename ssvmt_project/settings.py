@@ -79,7 +79,7 @@ WSGI_APPLICATION = 'ssvmt_project.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config(
-        default='sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3'),
+        default=os.environ.get('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/ssvmt'),
         conn_max_age=600
     )
 }
