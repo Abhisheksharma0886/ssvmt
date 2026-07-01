@@ -141,6 +141,13 @@
                     </a>
                 {% endif %}
                 
+                {% if user.profile.role == 'principal' %}
+                    <a href="{% url 'login_status_list' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-slate-800 hover:text-white transition {% if 'login-status' in request.path %}bg-saffron text-white{% endif %}">
+                        <i class="fa-solid fa-user-clock text-lg w-5"></i>
+                        <span>Login Status Tracker</span>
+                    </a>
+                {% endif %}
+                
                 {% if user.profile.role == 'principal' or user.is_superuser %}
                     <!-- Edit Content navigation dropdown with suboptions -->
                     <div class="space-y-1">

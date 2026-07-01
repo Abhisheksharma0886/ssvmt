@@ -56,6 +56,7 @@ urlpatterns = [
     
     # Onboard employee (Principal Action)
     path('onboard-employee/', views.onboard_employee_view, name='onboard_employee'),
+    path('cms/login-status/', views.login_status_list_view, name='login_status_list'),
     
     # Principal CMS Panel Actions
     path('cms/update-settings/', views.cms_update_settings_view, name='cms_update_settings'),

@@ -327,3 +327,36 @@ class GalleryEvent(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class UserLoginStatus(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='login_status')
+    is_logged_in = models.BooleanField(default=False)
+    last_login_time = models.DateTimeField(null=True, blank=True)
+    last_logout_time = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = "User Login Statuses"
+
+    def __str__(self):
+        return f"{self.user.username} - {'Logged In' if self.is_logged_in else 'Logged Out'}"
+
+
+from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.dispatch import receiver
+
+@receiver(user_logged_in)
+def handle_user_login(sender, request, user, **kwargs):
+    status, created = UserLoginStatus.objects.get_or_create(user=user)
+    status.is_logged_in = True
+    status.last_login_time = timezone.now()
+    status.save()
+
+@receiver(user_logged_out)
+def handle_user_logout(sender, request, user, **kwargs):
+    if user:
+        status, created = UserLoginStatus.objects.get_or_create(user=user)
+        status.is_logged_in = False
+        status.last_logout_time = timezone.now()
+        status.save()
+

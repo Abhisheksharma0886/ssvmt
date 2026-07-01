@@ -84,10 +84,6 @@
             </h3>
             <form action="{% url 'onboard_student' %}" method="POST" class="mt-4 space-y-3.5">
                 {% csrf_token %}
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase">Username / Login ID</label>
-                    <input type="text" name="username" required class="mt-1 block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs">
-                </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block text-[10px] font-bold text-gray-500 uppercase">First Name</label>

@@ -6,12 +6,25 @@ from django.http import HttpResponseForbidden, HttpResponse, JsonResponse
 from django.db import IntegrityError
 from django.utils import timezone
 from django.db.models import Q
+from django.core.paginator import Paginator
 from .models import (
     User, Profile, StudentProfile, SiteConfig, Attendance, 
     Marks, EditRequest, Timetable, Message, LeaveApplication, CarouselImage, Notice,
-    GalleryEvent
+    GalleryEvent, UserLoginStatus
 )
 import json
+
+def generate_username(first_name):
+    base = "".join(c for c in first_name.lower() if c.isalnum())
+    if not base:
+        base = "user"
+    suffix = ".ssvmt"
+    candidate = f"{base}{suffix}"
+    counter = 2
+    while User.objects.filter(username=candidate).exists():
+        candidate = f"{base}{counter}{suffix}"
+        counter += 1
+    return candidate
 
 # Decorator to restrict views by user role
 def role_required(allowed_roles):
@@ -119,12 +132,13 @@ def bootstrap_principal_view(request):
         return HttpResponseForbidden("Only the Superuser can bootstrap the Principal account.")
         
     if request.method == 'POST':
-        username = request.POST.get('username')
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
         password = request.POST.get('password')
         phone_no = request.POST.get('phone_no')
+        
+        username = generate_username(first_name)
         
         # Guard: Ensure no principal exists
         if Profile.objects.filter(role='principal').exists():
@@ -462,7 +476,6 @@ def get_class_rank(student_profile):
 @role_required(['principal'])
 def onboard_employee_view(request):
     if request.method == 'POST':
-        username = request.POST.get('username')
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
@@ -472,6 +485,7 @@ def onboard_employee_view(request):
         assigned_subjects = request.POST.getlist('assigned_subjects')
         is_class_teacher_of = request.POST.get('is_class_teacher_of', '')
         
+        username = generate_username(first_name)
         assigned_subjects_str = ", ".join(assigned_subjects)
         
         if role == 'class_teacher':
@@ -503,7 +517,7 @@ def onboard_employee_view(request):
                 assigned_subjects=assigned_subjects_str,
                 is_class_teacher_of=is_class_teacher_of
             )
-            messages.success(request, f"Successfully onboarded employee: {user.get_full_name()}")
+            messages.success(request, f"Successfully onboarded employee: {user.get_full_name()} (Username: {username})")
         except IntegrityError:
             messages.error(request, "Username already exists.")
             
@@ -518,7 +532,6 @@ def onboard_student_view(request):
         return HttpResponseForbidden("Only Class Teachers can onboard students.")
         
     if request.method == 'POST':
-        username = request.POST.get('username')
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
@@ -531,6 +544,7 @@ def onboard_student_view(request):
         address = request.POST.get('address')
         mobile_no = request.POST.get('mobile_no')
         
+        username = generate_username(first_name)
         try:
             user = User.objects.create_user(
                 username=username,
@@ -559,7 +573,7 @@ def onboard_student_view(request):
             for sub in subjects:
                 Marks.objects.create(student=student, subject=sub, status='draft', updated_by=request.user)
                 
-            messages.success(request, f"Student Draft created for {user.get_full_name()}. Marks sheet initialized.")
+            messages.success(request, f"Student Draft created for {user.get_full_name()} (Username: {username}). Marks sheet initialized.")
         except IntegrityError:
             messages.error(request, "Username or Admission Number already exists.")
             
@@ -1305,3 +1319,24 @@ def approve_class_results_view(request):
             messages.success(request, "Successfully approved selected student marks and generated results.")
             
     return redirect('/dashboard/')
+
+
+@role_required(['principal'])
+def login_status_list_view(request):
+    # Ensure every user has a UserLoginStatus
+    existing_users_without_status = User.objects.filter(login_status__isnull=True)
+    if existing_users_without_status.exists():
+        for u in existing_users_without_status:
+            UserLoginStatus.objects.get_or_create(user=u)
+
+    statuses_list = UserLoginStatus.objects.all().select_related(
+        'user', 'user__profile', 'user__student_profile'
+    ).order_by('-is_logged_in', '-last_login_time')
+    
+    paginator = Paginator(statuses_list, 30)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'portal/login_status_list.html', {
+        'page_obj': page_obj
+    })
