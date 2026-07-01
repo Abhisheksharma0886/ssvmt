@@ -3,6 +3,12 @@
 
 {% block title %}Principal Control Panel - SSVMT Portal{% endblock %}
 
+{% block extra_head %}
+<!-- Cropper.js CDN links -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+{% endblock %}
+
 {% block header_title %}Principal Portal Master Cockpit{% endblock %}
 
 {% block content %}
@@ -319,7 +325,7 @@
                     {% csrf_token %}
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 mb-1">School Logo (1:1 Ratio)</label>
-                        <img src="{% static 'images/logo.png' %}" alt="Logo" class="w-12 h-12 rounded-xl object-cover mb-2 border">
+                        <img src="{{ config.logo_url }}" alt="Logo" class="w-12 h-12 rounded-xl object-cover mb-2 border">
                         <input type="file" name="logo" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-saffron/10 file:text-saffron hover:file:bg-saffron/20">
                     </div>
                     <div>
@@ -328,7 +334,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 mb-1">Principal Desk Photo (1:1 Square cropped)</label>
-                        <img src="{% static 'images/principal.jpg' %}" alt="Photo" class="w-16 h-16 rounded-2xl object-cover mb-2 border">
+                        <img src="{{ config.principal_photo_url }}" alt="Photo" class="w-16 h-16 rounded-2xl object-cover mb-2 border">
                         <input type="file" name="principal_photo" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-saffron/10 file:text-saffron hover:file:bg-saffron/20">
                     </div>
                     <div>
@@ -488,5 +494,136 @@
             });
         }
     });
+</script>
+<!-- Cropper Modal -->
+<div id="cropper-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
+            <h4 class="text-sm font-bold text-slate-800 flex items-center space-x-2">
+                <i class="fa-solid fa-crop-simple text-saffron"></i>
+                <span>Crop and Adjust Image</span>
+            </h4>
+            <button type="button" onclick="closeCropperModal()" class="text-gray-400 hover:text-gray-600 transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+        
+        <!-- Image Container -->
+        <div class="p-6 flex-1 overflow-hidden flex items-center justify-center bg-slate-900 max-h-[50vh] min-h-[300px]">
+            <img id="cropper-image" src="" class="max-w-full max-h-full block">
+        </div>
+        
+        <!-- Controls & Footer -->
+        <div class="px-6 py-4 border-t border-gray-100 flex justify-between items-center bg-slate-50 text-xs">
+            <span class="text-gray-500 font-medium">Use the handles to crop your image.</span>
+            <div class="flex space-x-3">
+                <button type="button" onclick="closeCropperModal()" class="px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl font-bold transition">
+                    Cancel
+                </button>
+                <button type="button" id="cropper-save-btn" class="px-5 py-2 bg-saffron hover:bg-saffron-600 text-white rounded-xl font-bold transition">
+                    Crop & Apply
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentCropper = null;
+let currentCropCallback = null;
+
+function openCropperModal(file, aspectRatio, callback) {
+    const modal = document.getElementById('cropper-modal');
+    const image = document.getElementById('cropper-image');
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        image.src = e.target.result;
+        modal.classList.remove('hidden');
+        
+        if (currentCropper) {
+            currentCropper.destroy();
+        }
+        
+        currentCropper = new Cropper(image, {
+            aspectRatio: aspectRatio,
+            viewMode: 1,
+            autoCropArea: 1.0,
+            responsive: true,
+            background: false
+        });
+        
+        currentCropCallback = callback;
+    };
+    reader.readAsDataURL(file);
+}
+
+function closeCropperModal() {
+    const modal = document.getElementById('cropper-modal');
+    modal.classList.add('hidden');
+    if (currentCropper) {
+        currentCropper.destroy();
+        currentCropper = null;
+    }
+    currentCropCallback = null;
+}
+
+document.getElementById('cropper-save-btn').addEventListener('click', function() {
+    if (currentCropper && currentCropCallback) {
+        const canvas = currentCropper.getCroppedCanvas({
+            maxWidth: 1200,
+            maxHeight: 1200
+        });
+        
+        if (canvas) {
+            canvas.toBlob(function(blob) {
+                currentCropCallback(blob);
+                closeCropperModal();
+            }, 'image/jpeg', 0.95);
+        }
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('input[type="file"]').forEach(input => {
+        if (['logo', 'principal_photo', 'carousel_image', 'image'].includes(input.name)) {
+            input.addEventListener('change', function(e) {
+                const files = e.target.files;
+                if (files && files.length > 0) {
+                    const file = files[0];
+                    if (!file.type.startsWith('image/')) return;
+                    
+                    // Skip if the file is already the cropped one we assigned
+                    if (file.isCropped) return;
+                    
+                    let aspectRatio = NaN;
+                    if (input.name === 'logo' || input.name === 'principal_photo') {
+                        aspectRatio = 1; // 1:1 Square
+                    } else if (input.name === 'carousel_image' || input.name === 'image') {
+                        aspectRatio = 16 / 9; // 16:9 Landscape
+                    }
+                    
+                    openCropperModal(file, aspectRatio, function(croppedBlob) {
+                        const croppedFile = new File([croppedBlob], file.name, {type: 'image/jpeg'});
+                        croppedFile.isCropped = true; // custom flag to prevent infinite loops
+                        
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(croppedFile);
+                        input.files = dataTransfer.files;
+                        
+                        // Update preview if exists
+                        const parent = input.parentElement;
+                        const previewImg = parent.querySelector('img');
+                        if (previewImg) {
+                            previewImg.src = URL.createObjectURL(croppedFile);
+                            previewImg.classList.remove('hidden');
+                        }
+                    });
+                }
+            });
+        }
+    });
+});
 </script>
 {% endblock %}

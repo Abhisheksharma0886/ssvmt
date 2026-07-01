@@ -105,6 +105,24 @@ class SiteConfig(models.Model):
     )
     principal_photo = models.FileField(upload_to='principal/', blank=True, null=True)
 
+    @property
+    def logo_url(self):
+        import os
+        from django.conf import settings
+        from django.templatetags.static import static
+        if self.logo and os.path.exists(os.path.join(settings.MEDIA_ROOT, self.logo.name)):
+            return self.logo.url
+        return static('images/logo.png')
+
+    @property
+    def principal_photo_url(self):
+        import os
+        from django.conf import settings
+        from django.templatetags.static import static
+        if self.principal_photo and os.path.exists(os.path.join(settings.MEDIA_ROOT, self.principal_photo.name)):
+            return self.principal_photo.url
+        return static('images/principal.jpg')
+
     def __str__(self):
         return f"System Config ({self.academic_year})"
 

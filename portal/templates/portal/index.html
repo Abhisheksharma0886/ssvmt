@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Saraswati Shishu Vidya Mandir Tamar</title>
+    <link rel="icon" type="image/png" href="{{ config.logo_url }}">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -50,7 +51,7 @@
             <div class="flex justify-between h-20">
                 <!-- Logo & Title -->
                 <div class="flex items-center space-x-3">
-                    <img src="{% static 'images/logo.png' %}" alt="School Logo" class="w-12 h-12 rounded-xl object-cover border border-gray-200">
+                    <img src="{{ config.logo_url }}" alt="School Logo" class="w-12 h-12 rounded-xl object-cover border border-gray-200">
                     <div>
                         <span class="text-slate-900 font-extrabold text-base md:text-lg leading-none tracking-tight block">SARASWATI SHISHU VIDYA MANDIR</span>
                         <span class="text-[10px] md:text-xs text-saffron uppercase font-bold tracking-widest block mt-0.5">Tamar, Ranchi</span>
@@ -120,7 +121,7 @@
         <div id="about" class="lg:col-span-2 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-center md:items-start gap-8">
             <!-- 1:1 Photo Frame -->
             <div class="flex-shrink-0">
-                <img src="{% static 'images/principal.jpg' %}" alt="Principal" class="w-48 h-48 rounded-3xl object-cover border-4 border-saffron shadow-md">
+                <img src="{{ config.principal_photo_url }}" alt="Principal" class="w-48 h-48 rounded-3xl object-cover border-4 border-saffron shadow-md">
             </div>
             
             <!-- Desk text details -->
