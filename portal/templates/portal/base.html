@@ -10,7 +10,15 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
@@ -42,9 +50,64 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Smooth transitions for theme toggle */
+        body, header, aside, main, div, button, input, select, textarea, span, h1, h2, h3, a {
+            transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease, box-shadow 200ms ease;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: #FAFAFA;
+        }
+
+        /* Dark mode overrides for dashboard views */
+        html.dark body {
+            background-color: #0b0f19;
+            color: #f1f5f9;
+        }
+        html.dark .bg-white {
+            background-color: #111827 !important; /* slate-900 equivalent */
+            color: #f1f5f9 !important;
+        }
+        html.dark .text-slate-800, html.dark .text-slate-700, html.dark .text-gray-800, html.dark .text-gray-700 {
+            color: #e2e8f0 !important;
+        }
+        html.dark .text-slate-600, html.dark .text-slate-500, html.dark .text-gray-600, html.dark .text-gray-500 {
+            color: #94a3b8 !important;
+        }
+        html.dark .border-gray-100, html.dark .border-gray-200, html.dark .border-slate-800 {
+            border-color: #1f2937 !important;
+        }
+        html.dark input, html.dark select, html.dark textarea {
+            background-color: #1f2937 !important;
+            border-color: #374151 !important;
+            color: #f3f4f6 !important;
+        }
+        html.dark .bg-gray-50, html.dark .bg-slate-50, html.dark .bg-slate-900\/50, html.dark .bg-slate-950\/40, html.dark .bg-slate-900 {
+            background-color: #1f2937 !important;
+        }
+        html.dark .bg-slate-950 {
+            background-color: #111827 !important;
+        }
+        html.dark #sidebar {
+            background-color: #111827 !important;
+            border-color: #1f2937 !important;
+        }
+        html.dark header {
+            background-color: #111827 !important;
+            border-color: #1f2937 !important;
+        }
+        html.dark #sidebar .hover\:bg-slate-800:hover {
+            background-color: #1f2937 !important;
+        }
+        html.dark #sidebar .bg-slate-900\/50 {
+            background-color: #1f2937 !important;
+        }
+        html.dark ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        html.dark ::-webkit-scrollbar-thumb {
+            background: #374151;
         }
         /* Custom scrollbar */
         ::-webkit-scrollbar {
@@ -216,6 +279,22 @@
             </div>
             
             <div class="flex items-center space-x-4">
+                <!-- Sleek Theme Toggle Button -->
+                <button id="theme-toggle" class="p-2 rounded-xl border border-gray-100 hover:bg-gray-50 text-gray-500 hover:text-gray-800 transition-colors focus:outline-none dark:border-slate-800 dark:hover:bg-slate-800 dark:text-slate-400 dark:hover:text-white" title="Toggle Theme">
+                    <span id="theme-toggle-light-icon" class="hidden">
+                        <!-- Sun Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m0 13.5V21M4.93 4.93l1.59 1.59m10.96 10.96l1.59 1.59M3 12h2.25m13.5 0H21M6.52 17.48l-1.59 1.59m10.96-10.96l-1.59 1.59M12 7.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9z" />
+                        </svg>
+                    </span>
+                    <span id="theme-toggle-dark-icon" class="hidden">
+                        <!-- Moon Icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+                        </svg>
+                    </span>
+                </button>
+
                 <div class="text-right">
                     <p class="text-sm font-medium text-gray-700">Academic Year</p>
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-saffron/10 text-saffron">
@@ -263,6 +342,39 @@
         if (mobileMenuBtn && sidebar) {
             mobileMenuBtn.addEventListener('click', () => {
                 sidebar.classList.toggle('hidden');
+            });
+        }
+    </script>
+
+    <!-- Dark Mode Toggle Script -->
+    <script>
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const lightIcon = document.getElementById('theme-toggle-light-icon');
+        const darkIcon = document.getElementById('theme-toggle-dark-icon');
+
+        function updateIcons() {
+            if (document.documentElement.classList.contains('dark')) {
+                if (lightIcon) lightIcon.classList.remove('hidden');
+                if (darkIcon) darkIcon.classList.add('hidden');
+            } else {
+                if (lightIcon) lightIcon.classList.add('hidden');
+                if (darkIcon) darkIcon.classList.remove('hidden');
+            }
+        }
+
+        // Initialize icons
+        updateIcons();
+
+        if (themeToggleBtn) {
+            themeToggleBtn.addEventListener('click', function() {
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+                updateIcons();
             });
         }
     </script>
