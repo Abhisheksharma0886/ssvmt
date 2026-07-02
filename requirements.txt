@@ -6,3 +6,5 @@ sqlparse==0.5.5
 typing_extensions==4.15.0
 gunicorn
 whitenoise
+django-cloudinary-storage
+cloudinary

@@ -110,8 +110,11 @@ class SiteConfig(models.Model):
         import os
         from django.conf import settings
         from django.templatetags.static import static
-        if self.logo and os.path.exists(os.path.join(settings.MEDIA_ROOT, self.logo.name)):
-            return self.logo.url
+        from django.core.files.storage import default_storage
+        is_cloudinary = 'Cloudinary' in default_storage.__class__.__name__
+        if self.logo:
+            if is_cloudinary or os.path.exists(os.path.join(settings.MEDIA_ROOT, self.logo.name)):
+                return self.logo.url
         return static('images/logo.png')
 
     @property
@@ -119,8 +122,11 @@ class SiteConfig(models.Model):
         import os
         from django.conf import settings
         from django.templatetags.static import static
-        if self.principal_photo and os.path.exists(os.path.join(settings.MEDIA_ROOT, self.principal_photo.name)):
-            return self.principal_photo.url
+        from django.core.files.storage import default_storage
+        is_cloudinary = 'Cloudinary' in default_storage.__class__.__name__
+        if self.principal_photo:
+            if is_cloudinary or os.path.exists(os.path.join(settings.MEDIA_ROOT, self.principal_photo.name)):
+                return self.principal_photo.url
         return static('images/principal.jpg')
 
     def __str__(self):
