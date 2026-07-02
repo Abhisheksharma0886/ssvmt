@@ -107,27 +107,15 @@ class SiteConfig(models.Model):
 
     @property
     def logo_url(self):
-        import os
-        from django.conf import settings
-        from django.templatetags.static import static
-        from django.core.files.storage import default_storage
-        is_cloudinary = 'Cloudinary' in default_storage.__class__.__name__
         if self.logo:
-            if is_cloudinary or os.path.exists(os.path.join(settings.MEDIA_ROOT, self.logo.name)):
-                return self.logo.url
-        return static('images/logo.png')
+            return self.logo.url
+        return None
 
     @property
     def principal_photo_url(self):
-        import os
-        from django.conf import settings
-        from django.templatetags.static import static
-        from django.core.files.storage import default_storage
-        is_cloudinary = 'Cloudinary' in default_storage.__class__.__name__
         if self.principal_photo:
-            if is_cloudinary or os.path.exists(os.path.join(settings.MEDIA_ROOT, self.principal_photo.name)):
-                return self.principal_photo.url
-        return static('images/principal.jpg')
+            return self.principal_photo.url
+        return None
 
     def __str__(self):
         return f"System Config ({self.academic_year})"

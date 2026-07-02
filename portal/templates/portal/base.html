@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}SSVMT Tamar Portal{% endblock %}</title>
+    {% if config.logo_url %}
     <link rel="icon" type="image/png" href="{{ config.logo_url }}">
+    {% endif %}
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -76,7 +78,11 @@
     <!-- Mobile Top Navigation -->
     <header class="md:hidden w-full bg-saffron text-white flex justify-between items-center px-4 py-3 shadow-md z-50 flex-shrink-0">
         <div class="flex items-center space-x-2">
-            <img src="{{ config.logo_url }}" alt="School Logo" class="w-8 h-8 rounded-full object-cover">
+            {% if config.logo_url %}
+                <img src="{{ config.logo_url }}" alt="School Logo" class="w-8 h-8 rounded-full object-cover">
+            {% else %}
+                <div class="w-8 h-8 rounded-full bg-saffron-600 border border-saffron-400 flex items-center justify-center text-white font-bold text-[10px]">S</div>
+            {% endif %}
             <span class="font-bold tracking-wide text-sm uppercase">SSVMT Tamar Portal</span>
         </div>
         <button id="mobile-menu-btn" class="text-white hover:text-orange-200 focus:outline-none">
@@ -88,7 +94,11 @@
     <aside id="sidebar" class="w-full md:w-64 bg-slate-900 text-slate-300 flex-shrink-0 flex flex-col justify-between hidden md:flex h-screen border-r border-slate-800 shadow-xl transition-all duration-300">
         <!-- Logo and Brand -->
         <div class="px-6 py-6 border-b border-slate-800 bg-slate-950 flex items-center space-x-3">
-            <img src="{{ config.logo_url }}" alt="School Logo" class="w-10 h-10 rounded-xl object-cover shadow-lg">
+            {% if config.logo_url %}
+                <img src="{{ config.logo_url }}" alt="School Logo" class="w-10 h-10 rounded-xl object-cover shadow-lg">
+            {% else %}
+                <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-saffron font-bold text-sm shadow-lg">S</div>
+            {% endif %}
             <div>
                 <h1 class="font-bold text-white leading-none text-sm tracking-wider uppercase">SSVMT Portal</h1>
                 <span class="text-xs text-saffron font-medium">Tamar, Ranchi</span>

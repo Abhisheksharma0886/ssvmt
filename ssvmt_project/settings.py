@@ -148,18 +148,5 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', ''),
 }
 
-# Use Cloudinary for media files if configuration is present, fallback to local storage
-if CLOUDINARY_STORAGE['CLOUD_NAME'] and CLOUDINARY_STORAGE['API_KEY'] and CLOUDINARY_STORAGE['API_SECRET']:
-    DEFAULT_STORAGE_BACKEND = "cloudinary_storage.storage.MediaCloudinaryStorage"
-else:
-    DEFAULT_STORAGE_BACKEND = "django.core.files.storage.FileSystemStorage"
-
-# Configure WhiteNoise to serve compressed and cached static files
-STORAGES = {
-    "default": {
-        "BACKEND": DEFAULT_STORAGE_BACKEND,
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

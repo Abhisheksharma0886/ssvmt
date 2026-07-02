@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Saraswati Shishu Vidya Mandir Tamar</title>
+    {% if config.logo_url %}
     <link rel="icon" type="image/png" href="{{ config.logo_url }}">
+    {% endif %}
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -51,7 +53,11 @@
             <div class="flex justify-between h-20">
                 <!-- Logo & Title -->
                 <div class="flex items-center space-x-3">
+                    {% if config.logo_url %}
                     <img src="{{ config.logo_url }}" alt="School Logo" class="w-12 h-12 rounded-xl object-cover border border-gray-200">
+                    {% else %}
+                    <div class="w-12 h-12 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center text-saffron font-bold text-base">S</div>
+                    {% endif %}
                     <div>
                         <span class="text-slate-900 font-extrabold text-base md:text-lg leading-none tracking-tight block">SARASWATI SHISHU VIDYA MANDIR</span>
                         <span class="text-[10px] md:text-xs text-saffron uppercase font-bold tracking-widest block mt-0.5">Tamar, Ranchi</span>
@@ -121,7 +127,14 @@
         <div id="about" class="lg:col-span-2 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-center md:items-start gap-8">
             <!-- 1:1 Photo Frame -->
             <div class="flex-shrink-0">
+                {% if config.principal_photo_url %}
                 <img src="{{ config.principal_photo_url }}" alt="Principal" class="w-48 h-48 rounded-3xl object-cover border-4 border-saffron shadow-md">
+                {% else %}
+                <div class="w-48 h-48 rounded-3xl bg-gray-100 border-4 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 text-xs p-4 text-center">
+                    <i class="fa-solid fa-user-tie text-3xl mb-2 text-gray-300"></i>
+                    <span>No Principal Photo</span>
+                </div>
+                {% endif %}
             </div>
             
             <!-- Desk text details -->
@@ -305,7 +318,11 @@
                 <div id="printable-circular" class="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 w-full max-w-md font-sans text-slate-800 relative">
                     <!-- Circular Header (School info and logo) -->
                     <div id="circular-header" class="flex flex-col items-center text-center border-b-2 border-slate-900 pb-3 mb-4">
+                        {% if config.logo_url %}
                         <img id="share-logo" src="{{ config.logo_url }}" class="w-14 h-14 rounded-xl object-cover mb-1">
+                        {% else %}
+                        <div id="share-logo" class="w-14 h-14 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center text-saffron font-bold text-lg mb-1">S</div>
+                        {% endif %}
                         <h2 class="text-sm font-black text-slate-900 tracking-wide">SARASWATI SHISHU VIDYA MANDIR</h2>
                         <p class="text-[9px] font-bold text-saffron uppercase tracking-wider">Tamar, Ranchi, Jharkhand</p>
                     </div>

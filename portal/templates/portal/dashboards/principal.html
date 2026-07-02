@@ -333,7 +333,11 @@
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 mb-1">School Logo (1:1 Ratio)</label>
                         <div class="flex items-center space-x-4 mb-2">
-                            <img src="{{ config.logo_url }}" alt="Logo" class="w-12 h-12 rounded-xl object-cover border">
+                            {% if config.logo_url %}
+                                <img src="{{ config.logo_url }}" alt="Logo" class="w-12 h-12 rounded-xl object-cover border">
+                            {% else %}
+                                <div class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center border text-gray-400 text-xs font-bold">No Logo</div>
+                            {% endif %}
                             {% if config.logo %}
                                 <a href="{% url 'cms_delete_logo' %}" class="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-[9px] font-bold transition flex items-center space-x-1">
                                     <i class="fa-solid fa-trash-can"></i> <span>Delete Custom Logo</span>
@@ -349,7 +353,11 @@
                     <div>
                         <label class="block text-xs font-semibold text-gray-500 mb-1">Principal Desk Photo (1:1 Square cropped)</label>
                         <div class="flex items-center space-x-4 mb-2">
-                            <img src="{{ config.principal_photo_url }}" alt="Photo" class="w-16 h-16 rounded-2xl object-cover border">
+                            {% if config.principal_photo_url %}
+                                <img src="{{ config.principal_photo_url }}" alt="Photo" class="w-16 h-16 rounded-2xl object-cover border">
+                            {% else %}
+                                <div class="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center border text-gray-400 text-[10px] font-bold text-center">No Photo</div>
+                            {% endif %}
                             {% if config.principal_photo %}
                                 <a href="{% url 'cms_delete_principal_photo' %}" class="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-[9px] font-bold transition flex items-center space-x-1">
                                     <i class="fa-solid fa-trash-can"></i> <span>Delete Custom Photo</span>
