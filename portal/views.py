@@ -10,9 +10,10 @@ from django.core.paginator import Paginator
 from .models import (
     User, Profile, StudentProfile, SiteConfig, Attendance, 
     Marks, EditRequest, Timetable, Message, LeaveApplication, CarouselImage, Notice,
-    GalleryEvent, UserLoginStatus
+    GalleryEvent, UserLoginStatus, SchoolCalendar
 )
 import json
+import calendar
 
 def generate_username(first_name):
     base = "".join(c for c in first_name.lower() if c.isalnum())
@@ -214,6 +215,93 @@ def principal_dashboard(request, config):
                 'marks_list': student_marks,
             })
             
+    # For Principal Calendar Manager:
+    import datetime
+    today = timezone.localdate()
+    if today.month >= 4:
+        acad_start_year = today.year
+    else:
+        acad_start_year = today.year - 1
+
+    selected_month = request.GET.get('calendar_month', '')
+    if selected_month.isdigit():
+        selected_month = int(selected_month)
+    else:
+        selected_month = today.month
+
+    if selected_month >= 4:
+        calendar_year = acad_start_year
+    else:
+        calendar_year = acad_start_year + 1
+
+    first_weekday, num_days = calendar.monthrange(calendar_year, selected_month)
+    
+    month_calendar_events = SchoolCalendar.objects.filter(
+        date__year=calendar_year,
+        date__month=selected_month
+    )
+    calendar_events_by_day = {evt.date.day: evt for evt in month_calendar_events}
+    
+    calendar_days = []
+    for _ in range(first_weekday):
+        calendar_days.append({
+            'day': '',
+            'status': 'empty',
+            'date_str': '',
+            'event_id': '',
+            'event_title': '',
+            'event_desc': '',
+            'event_status': ''
+        })
+        
+    for d in range(1, num_days + 1):
+        date_obj = datetime.date(calendar_year, selected_month, d)
+        day_event = calendar_events_by_day.get(d)
+        is_sunday = (date_obj.weekday() == 6)
+        
+        date_str = date_obj.strftime("%Y-%m-%d")
+        
+        event_title = ""
+        event_desc = ""
+        event_id = ""
+        event_status = ""
+        
+        if is_sunday:
+            status = 'holiday'
+        else:
+            status = 'upcoming'
+            
+        if day_event:
+            event_id = day_event.id
+            event_title = day_event.title
+            event_desc = day_event.description or ""
+            event_status = day_event.status
+            if day_event.status == 'holiday':
+                status = 'holiday'
+            elif day_event.status == 'event':
+                status = 'event'
+            elif day_event.status == 'working_sunday':
+                status = 'working_sunday'
+                
+        calendar_days.append({
+            'day': d,
+            'status': status,
+            'date_str': date_str,
+            'event_id': event_id,
+            'event_title': event_title,
+            'event_desc': event_desc,
+            'event_status': event_status
+        })
+        
+    months_choices = [
+        (4, 'April'), (5, 'May'), (6, 'June'), (7, 'July'),
+        (8, 'August'), (9, 'September'), (10, 'October'), (11, 'November'),
+        (12, 'December'), (1, 'January'), (2, 'February'), (3, 'March')
+    ]
+    
+    selected_date_obj = datetime.date(calendar_year, selected_month, 1)
+    current_month_name = selected_date_obj.strftime("%B %Y")
+
     context = {
         'config': config,
         'pending_students': pending_students,
@@ -227,6 +315,10 @@ def principal_dashboard(request, config):
         'classes_list': classes_list,
         'selected_result_class': selected_class,
         'class_students_results': class_students_results,
+        'calendar_days': calendar_days,
+        'current_month_name': current_month_name,
+        'selected_month': selected_month,
+        'months_choices': months_choices,
         'active_tab': 'principal'
     }
     return render(request, 'portal/dashboards/principal.html', context)
@@ -431,61 +523,101 @@ def student_dashboard(request, config):
             overall_percentage = (total_obtained / total_max) * 100
         rank = get_class_rank(student)
 
-    total_working = config.school_working_days
+    import datetime
+    today = timezone.localdate()
+    if today.month >= 4:
+        acad_start_year = today.year
+    else:
+        acad_start_year = today.year - 1
+    acad_start = datetime.date(acad_start_year, 4, 1)
+
+    total_working = Attendance.objects.filter(student=student, date__gte=acad_start, date__lte=today).count()
     # Count "Late" as present inside dashboards
-    attended = Attendance.objects.filter(student=student, status__in=['present', 'late']).count()
+    attended = Attendance.objects.filter(student=student, date__gte=acad_start, date__lte=today, status__in=['present', 'late']).count()
     attendance_percentage = (attended / total_working * 100) if total_working > 0 else 0.0
 
     # Monthly calendar days logic
-    import datetime
-    today = timezone.localdate()
-    year = today.year
-    month = today.month
-    
+    selected_month = request.GET.get('calendar_month', '')
+    if selected_month.isdigit():
+        selected_month = int(selected_month)
+    else:
+        selected_month = today.month
+
+    if selected_month >= 4:
+        calendar_year = acad_start_year
+    else:
+        calendar_year = acad_start_year + 1
+
+    first_weekday, num_days = calendar.monthrange(calendar_year, selected_month)
+
+    # Get SchoolCalendar overrides and events for the selected month/year
+    month_calendar_events = SchoolCalendar.objects.filter(
+        date__year=calendar_year,
+        date__month=selected_month
+    )
+    calendar_events_by_day = {evt.date.day: evt for evt in month_calendar_events}
+
+    # Get monthly student attendance
     month_attendance = Attendance.objects.filter(
         student=student,
-        date__year=year,
-        date__month=month
+        date__year=calendar_year,
+        date__month=selected_month
     )
     attendance_by_day = {att.date.day: att.status for att in month_attendance}
-    
-    from portal.models import GalleryEvent
-    month_events = GalleryEvent.objects.filter(
-        date__year=year,
-        date__month=month
-    )
-    event_days = set(evt.date.day for evt in month_events)
-    
-    sundays = []
-    for d in range(1, 31):
-        try:
-            dt = datetime.date(year, month, d)
-            if dt.weekday() == 6:
-                sundays.append(d)
-        except ValueError:
-            pass
-            
+
     calendar_days = []
-    for d in range(1, 31):
-        status = 'upcoming'
-        try:
-            date_obj = datetime.date(year, month, d)
-        except ValueError:
-            continue
-            
-        if d in event_days or d in sundays:
-            status = 'event'
-        elif date_obj > today:
-            status = 'upcoming'
-        elif d in attendance_by_day:
-            status = attendance_by_day[d] # present, absent, late
+    # Prepend empty blocks to align starting weekday (0 = Monday, 6 = Sunday)
+    for _ in range(first_weekday):
+        calendar_days.append({
+            'day': '',
+            'status': 'empty',
+            'title': '',
+            'desc': ''
+        })
+
+    for d in range(1, num_days + 1):
+        date_obj = datetime.date(calendar_year, selected_month, d)
+        day_event = calendar_events_by_day.get(d)
+        is_sunday = (date_obj.weekday() == 6)
+
+        event_title = ""
+        event_desc = ""
+
+        if is_sunday:
+            status = 'holiday'
         else:
             status = 'upcoming'
-            
+
+        if day_event:
+            event_title = day_event.title
+            event_desc = day_event.description or ""
+            if day_event.status == 'holiday':
+                status = 'holiday'
+            elif day_event.status == 'event':
+                status = 'event'
+            elif day_event.status == 'working_sunday':
+                status = 'upcoming'
+
+        # If in the past, attendance takes precedence
+        if date_obj <= today:
+            if d in attendance_by_day:
+                status = attendance_by_day[d] # present, absent, late
+
         calendar_days.append({
             'day': d,
-            'status': status
+            'status': status,
+            'title': event_title,
+            'desc': event_desc
         })
+
+    months_choices = [
+        (4, 'April'), (5, 'May'), (6, 'June'), (7, 'July'),
+        (8, 'August'), (9, 'September'), (10, 'October'), (11, 'November'),
+        (12, 'December'), (1, 'January'), (2, 'February'), (3, 'March')
+    ]
+
+    selected_date_obj = datetime.date(calendar_year, selected_month, 1)
+    current_month_name = selected_date_obj.strftime("%B %Y")
 
     context = {
         'config': config,
@@ -497,9 +629,12 @@ def student_dashboard(request, config):
         'overall_percentage': round(overall_percentage, 2),
         'rank': rank,
         'attended': attended,
+        'total_working': total_working,
         'attendance_percentage': round(attendance_percentage, 2),
         'calendar_days': calendar_days,
-        'current_month_name': today.strftime("%B %Y"),
+        'current_month_name': current_month_name,
+        'selected_month': selected_month,
+        'months_choices': months_choices,
         'active_tab': 'student'
     }
     return render(request, 'portal/dashboards/student.html', context)
@@ -964,10 +1099,15 @@ def marks_entry_view(request):
     
     if profile and profile.role == 'teacher':
         allowed_subjects = profile.get_assigned_subjects()
+        assigned_classes = set()
         if profile.is_class_teacher_of:
-            classes = [profile.is_class_teacher_of]
-        else:
-            classes = []
+            assigned_classes.add(profile.is_class_teacher_of)
+        # Fetch from Timetable
+        t_classes = Timetable.objects.filter(teacher=profile).values_list('class_name', flat=True).distinct()
+        for tc in t_classes:
+            if tc:
+                assigned_classes.add(tc)
+        classes = sorted(list(assigned_classes))
     else:
         allowed_subjects = subjects
         
@@ -1008,6 +1148,7 @@ def marks_entry_view(request):
     return render(request, 'portal/marks_entry.html', {
         'config': config,
         'classes': classes,
+        'assigned_classes': classes,
         'subjects': subjects,
         'allowed_subjects': allowed_subjects,
         'selected_class': selected_class,
@@ -1390,3 +1531,56 @@ def login_status_list_view(request):
     return render(request, 'portal/login_status_list.html', {
         'page_obj': page_obj
     })
+
+
+@role_required(['principal'])
+def save_calendar_event_view(request):
+    if request.method == 'POST':
+        dates_raw = request.POST.get('dates', '')
+        date_single = request.POST.get('date', '')
+        title = request.POST.get('title', 'Holiday')
+        description = request.POST.get('description', '')
+        status = request.POST.get('status', 'holiday')
+        
+        dates_to_process = []
+        if dates_raw:
+            dates_to_process = [d.strip() for d in dates_raw.split(',') if d.strip()]
+        elif date_single:
+            dates_to_process = [date_single]
+            
+        if not dates_to_process:
+            messages.error(request, "No dates selected.")
+            return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
+            
+        import datetime
+        success_count = 0
+        for date_str in dates_to_process:
+            try:
+                date_val = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+                SchoolCalendar.objects.update_or_create(
+                    date=date_val,
+                    defaults={
+                        'title': title,
+                        'description': description,
+                        'status': status
+                    }
+                )
+                success_count += 1
+            except ValueError:
+                pass
+                
+        if success_count > 1:
+            messages.success(request, f"Successfully saved calendar entry for {success_count} dates.")
+        else:
+            messages.success(request, "Calendar entry saved successfully.")
+            
+    return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
+
+
+@role_required(['principal'])
+def delete_calendar_event_view(request, event_id):
+    event = get_object_or_404(SchoolCalendar, id=event_id)
+    date_str = event.date.strftime("%Y-%m-%d")
+    event.delete()
+    messages.success(request, f"Deleted custom calendar entry for {date_str}.")
+    return redirect(request.META.get('HTTP_REFERER', 'dashboard'))

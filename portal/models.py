@@ -372,3 +372,18 @@ def handle_user_logout(sender, request, user, **kwargs):
         status.last_logout_time = timezone.now()
         status.save()
 
+
+class SchoolCalendar(models.Model):
+    STATUS_CHOICES = [
+        ('holiday', 'Holiday / Sunday Off'),
+        ('event', 'School Event / Function'),
+        ('working_sunday', 'Working Sunday (Override)'),
+    ]
+    date = models.DateField(unique=True)
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='holiday')
+
+    def __str__(self):
+        return f"{self.date} - {self.title} ({self.get_status_display()})"
+

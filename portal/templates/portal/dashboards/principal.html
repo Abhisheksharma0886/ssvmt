@@ -81,12 +81,15 @@
     </div>
 
     <!-- MAIN INTERACTIVE TABS BAR -->
-    <div class="flex border-b border-gray-100 space-x-6">
+    <div class="flex border-b border-gray-100 space-x-6 overflow-x-auto whitespace-nowrap scrollbar-none">
         <button onclick="switchTab('approvals')" class="tab-btn font-bold text-sm pb-3 border-b-2 border-saffron text-saffron focus:outline-none" id="tab-approvals">
             Approvals & Onboarding
         </button>
         <button onclick="switchTab('cms')" class="tab-btn font-bold text-sm pb-3 border-b-2 border-transparent text-gray-400 hover:text-slate-800 focus:outline-none" id="tab-cms">
             Home Page CMS Panel
+        </button>
+        <button onclick="switchTab('calendar')" class="tab-btn font-bold text-sm pb-3 border-b-2 border-transparent text-gray-400 hover:text-slate-800 focus:outline-none" id="tab-calendar">
+            School Calendar Manager
         </button>
     </div>
 
@@ -484,6 +487,167 @@
         </div>
     </div>
 
+    <!-- TAB 3: SCHOOL CALENDAR MANAGER -->
+    <div id="section-calendar" class="tab-section space-y-8 hidden">
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-100 pb-4 mb-6 gap-4">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800 flex items-center space-x-2">
+                        <i class="fa-solid fa-calendar-days text-saffron"></i>
+                        <span>School Academic Calendar Manager</span>
+                    </h3>
+                    <p class="text-xs text-gray-400 mt-1">Configure school events, holidays, weekly off overrides, and multi-date vacations.</p>
+                </div>
+                
+                <form method="GET" action="" class="flex items-center space-x-2">
+                    <select name="calendar_month" onchange="this.form.submit()" class="py-2 px-3 border border-gray-200 rounded-xl text-xs bg-white text-gray-700 font-semibold focus:outline-none focus:ring-1 focus:ring-saffron">
+                        {% for m_val, m_name in months_choices %}
+                            <option value="{{ m_val }}" {% if m_val == selected_month %}selected{% endif %}>{{ m_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="text-sm text-saffron font-bold">{{ current_month_name }}</span>
+                </form>
+            </div>
+
+            <!-- Color coding legend -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3 text-xs font-bold text-center bg-gray-50 p-3 rounded-2xl border border-gray-100 mb-6">
+                <div class="flex items-center space-x-2 p-2 bg-white border border-gray-200 rounded-xl">
+                    <span class="w-3.5 h-3.5 bg-white border border-gray-300 rounded-lg"></span>
+                    <span class="text-gray-500">Upcoming Working Day</span>
+                </div>
+                <div class="flex items-center space-x-2 p-2 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl">
+                    <span class="w-3.5 h-3.5 bg-rose-500 rounded-lg"></span>
+                    <span>Holiday / Sunday Off</span>
+                </div>
+                <div class="flex items-center space-x-2 p-2 bg-yellow-50 text-yellow-800 border border-yellow-200 rounded-xl">
+                    <span class="w-3.5 h-3.5 bg-yellow-400 rounded-lg"></span>
+                    <span>School Event / Function</span>
+                </div>
+                <div class="flex items-center space-x-2 p-2 bg-green-50 text-green-800 border border-green-200 rounded-xl">
+                    <span class="w-3.5 h-3.5 bg-green-500 rounded-lg"></span>
+                    <span>Working Sunday (Override)</span>
+                </div>
+                <div class="flex items-center space-x-2 p-2 bg-blue-50 text-blue-800 border border-blue-200 rounded-xl col-span-2 sm:col-span-1">
+                    <span class="w-3.5 h-3.5 bg-blue-500 rounded-lg"></span>
+                    <span>Multi-Date Range Mode</span>
+                </div>
+            </div>
+
+            <!-- Interactive Grid -->
+            <div class="grid grid-cols-7 gap-3 text-center text-xs font-bold">
+                <!-- Headers -->
+                <div class="text-slate-400 text-xs py-2 uppercase">Mon</div>
+                <div class="text-slate-400 text-xs py-2 uppercase">Tue</div>
+                <div class="text-slate-400 text-xs py-2 uppercase">Wed</div>
+                <div class="text-slate-400 text-xs py-2 uppercase">Thu</div>
+                <div class="text-slate-400 text-xs py-2 uppercase">Fri</div>
+                <div class="text-slate-400 text-xs py-2 uppercase">Sat</div>
+                <div class="text-red-400 text-xs py-2 uppercase">Sun</div>
+                
+                {% for day in calendar_days %}
+                    {% if day.status == 'empty' %}
+                        <div class="w-full aspect-square border border-transparent"></div>
+                    {% else %}
+                        <div class="w-full aspect-square flex flex-col justify-between p-2 rounded-2xl transition-all border relative group cursor-pointer
+                            {% if day.status == 'holiday' %}
+                                bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100
+                            {% elif day.status == 'event' %}
+                                bg-yellow-50 text-yellow-800 border-yellow-200 hover:bg-yellow-100/80
+                            {% elif day.status == 'working_sunday' %}
+                                bg-green-50 text-green-800 border-green-200 hover:bg-green-100/80
+                            {% else %}
+                                bg-white text-slate-700 border-gray-100 hover:border-gray-300
+                            {% endif %}"
+                            onclick="handleDayClick(event, '{{ day.date_str }}', '{{ day.event_id }}', '{{ day.event_title }}', '{{ day.event_desc }}', '{{ day.event_status }}')">
+                            
+                            <!-- Checkbox for Multi-date Selection -->
+                            <div class="absolute top-1.5 right-1.5 z-10">
+                                <input type="checkbox" value="{{ day.date_str }}" class="day-checkbox rounded text-saffron focus:ring-saffron w-4 h-4 cursor-pointer" onclick="handleCheckboxClick(event)">
+                            </div>
+                            
+                            <!-- Date Number -->
+                            <div class="text-left font-black text-sm select-none">{{ day.day }}</div>
+                            
+                            <!-- Label summary -->
+                            <div class="text-[9px] truncate max-w-full font-semibold opacity-90 mt-1 select-none">
+                                {% if day.event_title %}
+                                    {{ day.event_title }}
+                                {% elif day.status == 'holiday' %}
+                                    Sunday Off
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Multi-Date Action Bar (Floating banner) -->
+        <div id="bulk-action-bar" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-xl z-50 flex items-center space-x-6 border border-slate-850 max-w-[90%] sm:max-w-md">
+            <div>
+                <p class="text-xs font-bold"><span id="selected-days-count">0</span> dates selected</p>
+                <p class="text-[10px] text-slate-400">Apply a single holiday, event or Sunday override.</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="openBulkModal()" class="py-2 px-3.5 bg-saffron hover:bg-saffron-600 text-white font-bold rounded-xl text-xs transition">
+                    Apply Action
+                </button>
+                <button onclick="clearBulkSelection()" class="py-2 px-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CALENDAR EVENT MODAL (ADD / EDIT) -->
+    <div id="calendar-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-gray-100 overflow-hidden transform transition-all duration-300 scale-95 opacity-0" id="calendar-modal-content">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800" id="calendar-modal-title">Add/Edit Calendar Entry</h3>
+                    <p class="text-[10px] text-gray-400 mt-0.5" id="calendar-modal-date-display"></p>
+                </div>
+                <button onclick="closeCalendarModal()" class="text-gray-400 hover:text-slate-600 focus:outline-none">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <form method="POST" action="{% url 'save_calendar_event' %}" class="p-6 space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="date" id="form-date-single">
+                <input type="hidden" name="dates" id="form-dates-multiple">
+                
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Event / Holiday Title</label>
+                    <input type="text" name="title" id="form-title" required placeholder="e.g. Summer Vacation, Sunday Off" class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs bg-white">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Description (Optional)</label>
+                    <textarea name="description" id="form-desc" rows="3" placeholder="Additional details..." class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs bg-white"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Day Status Type</label>
+                    <select name="status" id="form-status" required class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs bg-white">
+                        <option value="holiday">Holiday / Sunday Off</option>
+                        <option value="event">School Event / Function</option>
+                        <option value="working_sunday">Working Sunday (Override)</option>
+                    </select>
+                </div>
+                
+                <div class="flex items-center space-x-2 pt-2 border-t border-gray-100" id="form-actions-container">
+                    <button type="submit" class="flex-1 py-2.5 bg-saffron hover:bg-saffron-600 text-white font-bold rounded-xl text-xs transition shadow-md shadow-saffron/10 text-center">
+                        Save Entry
+                    </button>
+                    <a href="" id="form-delete-btn" class="hidden py-2.5 px-4 bg-red-100 hover:bg-red-200 text-red-700 font-bold rounded-xl text-xs transition text-center">
+                        Delete
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </div>
 {% endblock %}
 
@@ -526,6 +690,114 @@
                 const sanitized = val.toLowerCase().replace(/[^a-z0-9]/g, '');
                 usernamePreview.textContent = sanitized ? `${sanitized}.ssvmt` : '...';
             });
+        }
+    });
+
+    // School Calendar Javascript Handler
+    let selectedDates = [];
+
+    function handleCheckboxClick(event) {
+        event.stopPropagation();
+        const checkbox = event.target;
+        const dateVal = checkbox.value;
+        
+        if (checkbox.checked) {
+            selectedDates.push(dateVal);
+        } else {
+            selectedDates = selectedDates.filter(d => d !== dateVal);
+        }
+        
+        updateBulkActionBar();
+    }
+    
+    function updateBulkActionBar() {
+        const bar = document.getElementById('bulk-action-bar');
+        const countSpan = document.getElementById('selected-days-count');
+        if (selectedDates.length > 0) {
+            bar.classList.remove('hidden');
+            countSpan.textContent = selectedDates.length;
+        } else {
+            bar.classList.add('hidden');
+        }
+    }
+    
+    function clearBulkSelection() {
+        document.querySelectorAll('.day-checkbox').forEach(cb => {
+            cb.checked = false;
+        });
+        selectedDates = [];
+        updateBulkActionBar();
+    }
+    
+    function openCalendarModal() {
+        const modal = document.getElementById('calendar-modal');
+        const content = document.getElementById('calendar-modal-content');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => {
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }, 50);
+    }
+    
+    function closeCalendarModal() {
+        const modal = document.getElementById('calendar-modal');
+        const content = document.getElementById('calendar-modal-content');
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }, 150);
+    }
+    
+    function handleDayClick(event, dateStr, eventId, eventTitle, eventDesc, eventStatus) {
+        // Prevent click if clicking the checkbox
+        if (event.target.classList.contains('day-checkbox')) return;
+        
+        // Single date edit
+        document.getElementById('calendar-modal-title').textContent = eventId ? 'Modify Calendar Entry' : 'Create Calendar Entry';
+        document.getElementById('calendar-modal-date-display').textContent = 'Date: ' + dateStr;
+        
+        document.getElementById('form-date-single').value = dateStr;
+        document.getElementById('form-dates-multiple').value = '';
+        
+        document.getElementById('form-title').value = eventTitle || '';
+        document.getElementById('form-desc').value = eventDesc || '';
+        document.getElementById('form-status').value = eventStatus || 'holiday';
+        
+        const deleteBtn = document.getElementById('form-delete-btn');
+        if (eventId) {
+            deleteBtn.href = '/cms/calendar/delete/' + eventId + '/';
+            deleteBtn.classList.remove('hidden');
+        } else {
+            deleteBtn.classList.add('hidden');
+        }
+        
+        openCalendarModal();
+    }
+    
+    function openBulkModal() {
+        document.getElementById('calendar-modal-title').textContent = 'Create Bulk Calendar Entry';
+        document.getElementById('calendar-modal-date-display').textContent = 'Applying to ' + selectedDates.length + ' selected dates';
+        
+        document.getElementById('form-date-single').value = '';
+        document.getElementById('form-dates-multiple').value = selectedDates.join(',');
+        
+        document.getElementById('form-title').value = '';
+        document.getElementById('form-desc').value = '';
+        document.getElementById('form-status').value = 'holiday';
+        
+        document.getElementById('form-delete-btn').classList.add('hidden');
+        
+        openCalendarModal();
+    }
+    
+    // Automatically switch to tab if URL parameter calendar_month exists
+    document.addEventListener("DOMContentLoaded", function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('calendar_month')) {
+            switchTab('calendar');
         }
     });
 </script>

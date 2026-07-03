@@ -81,4 +81,8 @@ urlpatterns = [
     path('marks/update-stage/', views.update_active_exam_stage_view, name='update_active_exam_stage'),
     path('marks/update-copy-show-exam/', views.update_active_copy_show_exam_view, name='update_active_copy_show_exam'),
     path('marks/approve-class/', views.approve_class_results_view, name='approve_class_results'),
+
+    # School Calendar CRUD actions
+    path('cms/calendar/save/', views.save_calendar_event_view, name='save_calendar_event'),
+    path('cms/calendar/delete/<int:event_id>/', views.delete_calendar_event_view, name='delete_calendar_event'),
 ]

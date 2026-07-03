@@ -15,7 +15,7 @@
                 <label class="block text-xs font-semibold text-gray-500 mb-1">Target Class</label>
                 <select name="class_name" required class="block w-full py-2 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-saffron text-xs bg-white">
                     <option value="">-- Choose Class --</option>
-                    {% for cls in classes %}
+                    {% for cls in assigned_classes %}
                         <option value="{{ cls }}" {% if selected_class == cls %}selected{% endif %}>{{ cls }}</option>
                     {% endfor %}
                 </select>
