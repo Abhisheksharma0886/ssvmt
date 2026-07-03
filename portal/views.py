@@ -1108,6 +1108,8 @@ def marks_entry_view(request):
             if tc:
                 assigned_classes.add(tc)
         classes = sorted(list(assigned_classes))
+        if not classes:
+            classes = ['Class I', 'Class II', 'Class III', 'Class IV', 'Class V', 'Class VI', 'Class VII', 'Class VIII', 'Class IX', 'Class X']
     else:
         allowed_subjects = subjects
         
